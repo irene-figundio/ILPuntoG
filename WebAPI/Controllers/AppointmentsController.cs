@@ -1,0 +1,61 @@
+using Microsoft.AspNetCore.Mvc;
+using Models;
+using Repository;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace WebAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AppointmentsController : ControllerBase
+{
+    private readonly IAppointmentRepository _repository;
+
+    public AppointmentsController(IAppointmentRepository repository)
+    {
+        _repository = repository;
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments(int? branchId)
+    {
+        if (branchId.HasValue)
+        {
+            return Ok(await _repository.GetAppointmentsByBranchAsync(branchId.Value));
+        }
+        return Ok(await _repository.GetAllAsync());
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Appointment>> GetAppointment(int id)
+    {
+        var appointment = await _repository.GetByIdAsync(id);
+        if (appointment == null)
+        {
+            return NotFound();
+        }
+        return Ok(appointment);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Appointment>> CreateAppointment(Appointment appointment)
+    {
+        await _repository.AddAsync(appointment);
+        await _repository.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, appointment);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAppointment(int id)
+    {
+        var appointment = await _repository.GetByIdAsync(id);
+        if (appointment == null)
+        {
+            return NotFound();
+        }
+        _repository.Remove(appointment);
+        await _repository.SaveChangesAsync();
+        return NoContent();
+    }
+}

@@ -1,0 +1,33 @@
+@model Models.Project
+@using Models
+
+<div class="container mt-4">
+    <h2>Nuovo Progetto</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Create">
+                <div class="form-group mb-3">
+                    <label asp-for="Name" class="control-label">Nome</label>
+                    <input asp-for="Name" class="form-control" required />
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="control-label">Descrizione</label>
+                    <textarea asp-for="Description" class="form-control"></textarea>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="Status" class="control-label">Stato</label>
+                    <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<ProjectStatus>()"></select>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="BranchId" class="control-label">Sede</label>
+                    <select asp-for="BranchId" class="form-select" asp-items="ViewBag.Branches"></select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">Salva</button>
+                    <a asp-action="Index" class="btn btn-secondary">Annulla</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
