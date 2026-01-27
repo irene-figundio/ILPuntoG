@@ -1,2 +1,2 @@
 # ILPuntoG
-Gestionare per fare il Punto sui Gant ;)
+Gestionale per fare il Punto sui Gant ;)
