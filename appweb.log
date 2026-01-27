@@ -1,3 +1,7 @@
+Using launch settings from /app/AppWeb/Properties/launchSettings.json...
+Building...
+warn: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[35]
+      No XML encryptor configured. Key {c5e283cd-d151-4158-9cf2-06221e2358f8} may be persisted to storage in unencrypted form.
 info: Microsoft.Hosting.Lifetime[14]
       Now listening on: http://localhost:5001
 info: Microsoft.Hosting.Lifetime[0]
@@ -9,36 +13,76 @@ info: Microsoft.Hosting.Lifetime[0]
 warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
       Failed to determine the https port for redirect.
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5000/api/appointments
+      Start processing HTTP request POST http://localhost:5000/api/account/register
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5000/api/appointments
+      Sending HTTP request POST http://localhost:5000/api/account/register
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 778.2948ms - 200
+      Received HTTP response headers after 1667.8874ms - 200
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 808.7801ms - 200
+      End processing HTTP request after 1695.4507ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
+      Start processing HTTP request POST http://localhost:5000/api/account/login
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
+      Sending HTTP request POST http://localhost:5000/api/account/login
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
+      Received HTTP response headers after 689.9507ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
+      End processing HTTP request after 690.2455ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
+      Start processing HTTP request GET http://localhost:5000/api/calendar/events
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
+      Sending HTTP request GET http://localhost:5000/api/calendar/events
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
+      Received HTTP response headers after 119.3879ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
+      End processing HTTP request after 119.6301ms - 200
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
       Start processing HTTP request GET http://localhost:5000/api/branches
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
       Sending HTTP request GET http://localhost:5000/api/branches
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 257.3001ms - 200
+      Received HTTP response headers after 70.5754ms - 200
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 257.6056ms - 200
+      End processing HTTP request after 70.835ms - 200
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5000/api/todotasks
+      Start processing HTTP request POST http://localhost:5000/api/account/login
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5000/api/todotasks
+      Sending HTTP request POST http://localhost:5000/api/account/login
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 41.0514ms - 200
+      Received HTTP response headers after 464.9053ms - 200
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 41.3349ms - 200
+      End processing HTTP request after 465.1496ms - 200
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5000/api/projects
+      Start processing HTTP request GET http://localhost:5000/api/calendar/events
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5000/api/projects
+      Sending HTTP request GET http://localhost:5000/api/calendar/events
 info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 28.8986ms - 200
+      Received HTTP response headers after 27.2773ms - 200
 info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 29.1396ms - 200
+      End processing HTTP request after 27.4612ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
+      Start processing HTTP request GET http://localhost:5000/api/branches
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
+      Sending HTTP request GET http://localhost:5000/api/branches
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
+      Received HTTP response headers after 4.6886ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
+      End processing HTTP request after 4.8703ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
+      Start processing HTTP request POST http://localhost:5000/api/account/login
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
+      Sending HTTP request POST http://localhost:5000/api/account/login
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
+      Received HTTP response headers after 209.7457ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
+      End processing HTTP request after 209.96ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
+      Start processing HTTP request GET http://localhost:5000/api/branches
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
+      Sending HTTP request GET http://localhost:5000/api/branches
+info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
+      Received HTTP response headers after 5.1758ms - 200
+info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
+      End processing HTTP request after 5.3373ms - 200
 info: Microsoft.Hosting.Lifetime[0]
       Application is shutting down...

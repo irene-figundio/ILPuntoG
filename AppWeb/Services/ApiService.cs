@@ -1,9 +1,50 @@
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using Models;
 namespace AppWeb.Services;
 public class ApiService {
     private readonly HttpClient _httpClient;
-    public ApiService(HttpClient httpClient) { _httpClient = httpClient; }
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public ApiService(HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+    {
+        _httpClient = httpClient;
+        _httpContextAccessor = httpContextAccessor;
+
+        var token = _httpContextAccessor.HttpContext?.Request.Cookies["JwtToken"];
+        if (!string.IsNullOrEmpty(token))
+        {
+            SetToken(token);
+        }
+    }
+
+    public void SetToken(string token)
+    {
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    public async Task<string?> LoginAsync(string username, string password)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/account/login", new { username, password });
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+            return result?.Token;
+        }
+        return null;
+    }
+
+    public async Task<bool> RegisterAsync(string name, string email, string username, string password)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/account/register", new { name, email, username, password });
+        return response.IsSuccessStatusCode;
+    }
+
+    public class LoginResponse
+    {
+        public string Token { get; set; } = string.Empty;
+    }
+
     public async Task<List<Branch>> GetBranchesAsync() => await _httpClient.GetFromJsonAsync<List<Branch>>("api/branches") ?? new();
     public async Task<Branch?> GetBranchAsync(int id) => await _httpClient.GetFromJsonAsync<Branch>($"api/branches/{id}");
     public async Task CreateBranchAsync(Branch branch) => await _httpClient.PostAsJsonAsync("api/branches", branch);
@@ -23,4 +64,10 @@ public class ApiService {
     public async Task CreateTaskAsync(TodoTask task) => await _httpClient.PostAsJsonAsync("api/todotasks", task);
     public async Task UpdateTaskAsync(int id, TodoTask task) => await _httpClient.PutAsJsonAsync($"api/todotasks/{id}", task);
     public async Task DeleteTaskAsync(int id) => await _httpClient.DeleteAsync($"api/todotasks/{id}");
+
+    public async Task<List<object>> GetCalendarEventsAsync() => await _httpClient.GetFromJsonAsync<List<object>>("api/calendar/events") ?? new();
+    public async Task UpdateCalendarEventAsync(string type, int dbId, DateTime newDate)
+    {
+        await _httpClient.PostAsJsonAsync("api/calendar/update-event", new { type, dbId, newDate });
+    }
 }
