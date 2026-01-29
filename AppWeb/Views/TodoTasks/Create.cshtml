@@ -1,41 +1,65 @@
 @model Models.TodoTask
-@using Models
 
-<div class="container mt-4">
-    <h2>Nuova Attività</h2>
-    <hr />
-    <div class="row">
-        <div class="col-md-6">
-            <form asp-action="Create">
-                <div class="form-group mb-3">
-                    <label asp-for="Title" class="control-label">Titolo</label>
-                    <input asp-for="Title" class="form-control" required />
-                </div>
-                <div class="form-group mb-3">
-                    <label asp-for="Description" class="control-label">Descrizione</label>
-                    <textarea asp-for="Description" class="form-control"></textarea>
-                </div>
-                <div class="form-group mb-3">
-                    <label asp-for="Priority" class="control-label">Priorità</label>
-                    <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<TaskPriority>()"></select>
-                </div>
-                <div class="form-group mb-3">
-                    <label asp-for="Deadline" class="control-label">Scadenza</label>
-                    <input asp-for="Deadline" class="form-control" type="date" />
-                </div>
-                <div class="form-group mb-3">
-                    <label asp-for="Status" class="control-label">Stato</label>
-                    <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<TodoStatus>()"></select>
-                </div>
-                <div class="form-group mb-3">
-                    <label asp-for="ProjectId" class="control-label">Progetto</label>
-                    <select asp-for="ProjectId" class="form-select" asp-items="ViewBag.Projects"></select>
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-success">Salva</button>
-                    <a asp-action="Index" class="btn btn-secondary">Annulla</a>
-                </div>
-            </form>
+@{
+    ViewData["Title"] = "Nuova Attività";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Attività</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Nuova</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-check-square me-2"></i>Nuova Attività</h4>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-bold">Titolo</label>
+                        <input asp-for="Title" class="form-control" placeholder="Cosa c'è da fare?" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-bold">Descrizione</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Dettagli dell'attività"></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Priority" class="form-label fw-bold">Priorità</label>
+                            <select asp-for="Priority" class="form-select" asp-items="Html.GetEnumSelectList<Models.TaskPriority>()"></select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Deadline" class="form-label fw-bold">Scadenza (Opzionale)</label>
+                            <input asp-for="Deadline" class="form-control" type="date" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ProjectId" class="form-label fw-bold">Progetto</label>
+                            <select asp-for="ProjectId" class="form-select" asp-items="ViewBag.Projects"></select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AssignedToUserId" class="form-label fw-bold">Assegnata a</label>
+                            <select asp-for="AssignedToUserId" class="form-select" asp-items="ViewBag.Users">
+                                <option value="">Non assegnata</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a asp-action="Index" class="btn btn-light px-4">Annulla</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">Crea Attività</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
