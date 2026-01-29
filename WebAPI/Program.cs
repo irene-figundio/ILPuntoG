@@ -36,8 +36,23 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddOpenApi();
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=IlPuntoG.db"));
+{
+    if (connectionString != null && (connectionString.Contains("Server=") || connectionString.Contains("Data Source=")))
+    {
+        // Use SQL Server if a connection string is provided and looks like a SQL Server one
+        // or just use it as the primary choice.
+        if (connectionString.Contains("Server="))
+            options.UseSqlServer(connectionString);
+        else
+            options.UseSqlite(connectionString);
+    }
+    else
+    {
+        options.UseSqlite("Data Source=IlPuntoG.db");
+    }
+});
 
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
