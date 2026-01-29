@@ -19,11 +19,14 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/Branches">Sedi</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/Projects">Progetti</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/Appointments">Appuntamenti</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/TodoTasks">Attività</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/Calendar">Calendario</a></li>
+                        @if (Context.Request.Cookies.ContainsKey("JwtToken"))
+                        {
+                            <li class="nav-item"><a class="nav-link" href="/Branches">Sedi</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Projects">Progetti</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Appointments">Appuntamenti</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/TodoTasks">Attività</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/Calendar">Calendario</a></li>
+                        }
                     </ul>
                     <ul class="navbar-nav">
                         @if (Context.Request.Cookies.ContainsKey("JwtToken"))
