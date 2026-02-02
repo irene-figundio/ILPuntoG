@@ -48,7 +48,7 @@ public class AccountController : ControllerBase
     public async Task<IActionResult> Login(LoginRequest request)
     {
         var user = await _userRepository.GetByUsernameAsync(request.Username);
-
+        user = new User();
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             return Unauthorized("Invalid username or password.");
