@@ -36,36 +36,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddOpenApi();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var dbCredentials = builder.Configuration.GetSection("DbCredentials");
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    if (dbCredentials.Exists() && !string.IsNullOrEmpty(dbCredentials["Server"]))
-    {
-        var sb = new System.Text.StringBuilder();
-        sb.Append($"Server={dbCredentials["Server"]};");
-        sb.Append($"Database={dbCredentials["Database"]};");
-        if (dbCredentials.GetValue<bool>("TrustedConnection"))
-            sb.Append("Trusted_Connection=True;");
-        else
-            sb.Append($"User Id={dbCredentials["UserId"]};Password={dbCredentials["Password"]};");
-
-        sb.Append("MultipleActiveResultSets=true;TrustServerCertificate=True;");
-        options.UseSqlServer(sb.ToString());
-    }
-    else if (connectionString != null)
-    {
-        if (connectionString.Contains("Server="))
-            options.UseSqlServer(connectionString);
-        else
-            options.UseSqlite(connectionString);
-    }
-    else
-    {
-        options.UseSqlite("Data Source=IlPuntoG.db");
-    }
-});
+builder.Services.AddDbContext<ApplicationDbContext>();
 
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();
 builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
