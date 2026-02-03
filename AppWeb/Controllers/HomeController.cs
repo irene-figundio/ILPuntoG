@@ -1,6 +1,7 @@
-using System.Diagnostics;
 using AppWeb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Models;
+using System.Diagnostics;
 
 namespace AppWeb.Controllers
 {
@@ -25,9 +26,9 @@ public class HomeController : Controller
 
             ViewBag.Stats = await _apiService.GetDashboardStatsAsync();
             ViewBag.KanbanTasks = await _apiService.GetKanbanTasksAsync();
-            ViewBag.BranchesSummary = await _apiService.GetBranchesSummaryAsync();
+            
 
-            if (User.IsInRole(global::Models.Roles.SuperAdmin))
+            if (User.IsInRole(Roles.SuperAdmin))
             {
                 ViewBag.BranchesSummary = await _apiService.GetBranchesSummaryAsync();
             }
