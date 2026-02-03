@@ -25,6 +25,7 @@ public class HomeController : Controller
 
             ViewBag.Stats = await _apiService.GetDashboardStatsAsync();
             ViewBag.KanbanTasks = await _apiService.GetKanbanTasksAsync();
+            ViewBag.BranchesSummary = await _apiService.GetBranchesSummaryAsync();
 
             if (User.IsInRole(global::Models.Roles.SuperAdmin))
             {

@@ -123,10 +123,10 @@ public class ApplicationDbContext : DbContext
 
         // Seed Priorities
         modelBuilder.Entity<Priority>().HasData(
-            new Priority { Id = 1, Name = "Bassa", Level = 1 },
-            new Priority { Id = 2, Name = "Media", Level = 2 },
-            new Priority { Id = 3, Name = "Alta", Level = 3 },
-            new Priority { Id = 4, Name = "Urgente", Level = 4 }
+            new Priority { Id = 1, Name = "Bassa", LevelId = 1 },
+            new Priority { Id = 2, Name = "Media", LevelId = 2 },
+            new Priority { Id = 3, Name = "Alta", LevelId = 3 },
+            new Priority { Id = 4, Name = "Urgente", LevelId = 4 }
         );
 
         // Seed TaskTypes

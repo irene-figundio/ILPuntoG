@@ -1,6 +1,6 @@
 @model Models.TodoTask
 
-<div class="card mb-3 shadow-sm border-0 kanban-card border-start border-4 @(Model.Priority?.Level >= 4 ? "border-danger" : (Model.Priority?.Level == 3 ? "border-warning" : "border-info"))"
+<div class="card mb-3 shadow-sm border-0 kanban-card border-start border-4 @(Model.Priority?.LevelId >= 4 ? "border-danger" : (Model.Priority?.LevelId == 3 ? "border-warning" : "border-info"))"
      data-task-id="@Model.Id"
      onclick="if(!window.isDragging) location.href='@Url.Action("Edit", "TodoTasks", new { id = Model.Id })'">
     <div class="card-body p-3">
@@ -15,7 +15,7 @@
             </small>
             @if (Model.Priority != null)
             {
-                <span class="badge @(Model.Priority.Level >= 4 ? "bg-danger" : (Model.Priority.Level == 3 ? "bg-warning text-dark" : "bg-info text-dark"))" style="font-size: 0.7rem;">
+                <span class="badge @(Model.Priority.LevelId >= 4 ? "bg-danger" : (Model.Priority.LevelId == 3 ? "bg-warning text-dark" : "bg-info text-dark"))" style="font-size: 0.7rem;">
                     @Model.Priority.Name
                 </span>
             }

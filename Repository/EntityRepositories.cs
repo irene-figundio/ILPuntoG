@@ -55,12 +55,12 @@ public class TodoTaskRepository : GenericRepository<TodoTask>, ITodoTaskReposito
     public override async Task<IEnumerable<TodoTask>> GetAllAsync()
     {
         return await _dbSet
-            .Include(t => t.Priority)
-            .Include(t => t.TaskType)
-            .Include(t => t.Client)
-            .Include(t => t.Project)
-            .Include(t => t.TaskAssignments)
-                .ThenInclude(ta => ta.User)
+            //.Include(t => t.Priority)
+            //.Include(t => t.TaskType)
+            //.Include(t => t.Client)
+            //.Include(t => t.Project)
+            //.Include(t => t.TaskAssignments)
+            //    .ThenInclude(ta => ta.User)
             .ToListAsync();
     }
 

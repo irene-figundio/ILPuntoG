@@ -34,7 +34,7 @@
     {
         bool isMyTask = item.TaskAssignments.Any(ta => ta.UserId == currentUserId);
         <div class="col-md-6 mb-4">
-            <div class="card h-100 shadow-sm border-0 transition-hover border-start border-4 @(item.Priority?.Level >= 4 ? "border-danger" : (item.Priority?.Level == 3 ? "border-warning" : "border-info"))">
+            <div class="card h-100 shadow-sm border-0 transition-hover border-start border-4 @(item.Priority?.LevelId >= 4 ? "border-danger" : (item.Priority?.LevelId == 3 ? "border-warning" : "border-info"))">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title text-primary fw-bold mb-0">

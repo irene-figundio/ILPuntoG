@@ -44,7 +44,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlite(connectionString ?? "Data Source=IlPuntoG.db");
+    options.UseSqlServer(connectionString);
 });
 
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();

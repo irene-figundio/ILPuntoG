@@ -35,7 +35,7 @@ public class DashboardController : ControllerBase
         _context = context;
     }
 
-    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "1");
     private string CurrentUserRole => User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
 
     [HttpGet("stats")]
@@ -49,16 +49,30 @@ public class DashboardController : ControllerBase
             tasks = tasks.Where(t => t.TaskAssignments.Any(ta => ta.UserId == CurrentUserId));
         }
 
+        var projects = await _projectRepo.GetAllAsync();
+
         var stats = new
         {
-            TotalTasks = tasks.Count(),
-            PendingTasks = tasks.Count(t => t.Status == TodoStatus.Pending),
-            InProgressTasks = tasks.Count(t => t.Status == TodoStatus.InProgress),
-            CompletedTasks = tasks.Count(t => t.Status == TodoStatus.Completed),
-            TotalProjects = (await _projectRepo.GetAllAsync()).Count(), // This could be filtered too
-            UpcomingAppointments = _context.Appointments.Count(a => a.StartTime >= DateTime.Now && a.StartTime <= DateTime.Now.AddDays(7))
+            TotalTasks = 0,
+            PendingTasks = 0,
+            InProgressTasks = 0,
+            CompletedTasks = 0,
+            TotalProjects = 0, // This could be filtered too
+            UpcomingAppointments =0
         };
 
+        if (tasks.Count() > 0)
+        {
+            stats = new
+            {
+                TotalTasks = tasks.Count(),
+                PendingTasks = tasks.Count(t => t.Status == TodoStatus.Pending),
+                InProgressTasks = tasks.Count(t => t.Status == TodoStatus.InProgress),
+                CompletedTasks = tasks.Count(t => t.Status == TodoStatus.Completed),
+                TotalProjects = (projects).Count(), // This could be filtered too
+                UpcomingAppointments = _context.Appointments.Count(a => a.StartTime >= DateTime.Now && a.StartTime <= DateTime.Now.AddDays(7))
+            };
+        }
         return Ok(stats);
     }
 
