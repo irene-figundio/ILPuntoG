@@ -38,6 +38,7 @@ public class BranchesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.SuperAdmin)]
     public async Task<ActionResult<Branch>> CreateBranch(Branch branch)
     {
         await _repository.AddAsync(branch);
@@ -46,25 +47,21 @@ public class BranchesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = Roles.SuperAdmin)]
     public async Task<IActionResult> UpdateBranch(int id, Branch branch)
     {
-        if (id != branch.Id)
-        {
-            return BadRequest();
-        }
+        if (id != branch.Id) return BadRequest();
         _repository.Update(branch);
         await _repository.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = Roles.SuperAdmin)]
     public async Task<IActionResult> DeleteBranch(int id)
     {
         var branch = await _repository.GetByIdAsync(id);
-        if (branch == null)
-        {
-            return NotFound();
-        }
+        if (branch == null) return NotFound();
         _repository.Remove(branch);
         await _repository.SaveChangesAsync();
         return NoContent();

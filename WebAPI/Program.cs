@@ -2,8 +2,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Repository;
-using Repository.Interceptors;
-using Repository.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "super_secret_key_that_is_long_enough_for_sha256");
+var secret = jwtSettings["Key"];
+if (string.IsNullOrEmpty(secret))
+{
+    throw new InvalidOperationException("JWT Key is missing in configuration.");
+}
+var key = Encoding.ASCII.GetBytes(secret);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -37,33 +40,35 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddOpenApi();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<ICurrentUserService, HttpContextCurrentUserService>();
 
-builder.Services.AddScoped<Func<int?>>(sp =>
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    var svc = sp.GetRequiredService<ICurrentUserService>();
-    return svc.GetUserId;
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseSqlite(connectionString ?? "Data Source=IlPuntoG.db");
 });
 
-builder.Services.AddDbContext<ApplicationDbContext>((sp, opts) =>
-{
-    opts.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"));
-
-    var interceptor = sp.GetRequiredService<ModificationAuditInterceptor>();
-    opts.AddInterceptors(interceptor);
-});
-builder.Services.AddRepositories();
-
-
-//builder.Services.AddScoped<IBranchRepository, BranchRepository>();
-//builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
-//builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
-//builder.Services.AddScoped<ITodoTaskRepository, TodoTaskRepository>();
-//builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<ITodoTaskRepository, TodoTaskRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<ITaskTypeRepository, TaskTypeRepository>();
+builder.Services.AddScoped<IPriorityRepository, PriorityRepository>();
+builder.Services.AddScoped<IWorkLogRepository, WorkLogRepository>();
+builder.Services.AddScoped<IUserBranchRepository, UserBranchRepository>();
+builder.Services.AddScoped<IClientBranchRepository, ClientBranchRepository>();
+builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();
 
 var app = builder.Build();
+
+// Create database if not exists
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.EnsureCreated();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -41,6 +41,7 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = Roles.SuperAdmin)]
     public async Task<ActionResult<Project>> CreateProject(Project project)
     {
         await _repository.AddAsync(project);
@@ -49,25 +50,21 @@ public class ProjectsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = Roles.SuperAdmin)]
     public async Task<IActionResult> UpdateProject(int id, Project project)
     {
-        if (id != project.Id)
-        {
-            return BadRequest();
-        }
+        if (id != project.Id) return BadRequest();
         _repository.Update(project);
         await _repository.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = Roles.SuperAdmin)]
     public async Task<IActionResult> DeleteProject(int id)
     {
         var project = await _repository.GetByIdAsync(id);
-        if (project == null)
-        {
-            return NotFound();
-        }
+        if (project == null) return NotFound();
         _repository.Remove(project);
         await _repository.SaveChangesAsync();
         return NoContent();

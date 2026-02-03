@@ -10,17 +10,6 @@ public class ApiService {
     {
         _httpClient = httpClient;
         _httpContextAccessor = httpContextAccessor;
-
-        var token = _httpContextAccessor.HttpContext?.Request.Cookies["JwtToken"];
-        if (!string.IsNullOrEmpty(token))
-        {
-            SetToken(token);
-        }
-    }
-
-    public void SetToken(string token)
-    {
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     public async Task<string?> LoginAsync(string username, string password)
@@ -61,13 +50,54 @@ public class ApiService {
     public async Task DeleteAppointmentAsync(int id) => await _httpClient.DeleteAsync($"api/appointments/{id}");
     public async Task<List<TodoTask>> GetTasksAsync(int? projectId = null) => await _httpClient.GetFromJsonAsync<List<TodoTask>>("api/todotasks" + (projectId.HasValue ? "?projectId=" + projectId : "")) ?? new();
     public async Task<TodoTask?> GetTaskAsync(int id) => await _httpClient.GetFromJsonAsync<TodoTask>($"api/todotasks/{id}");
-    public async Task CreateTaskAsync(TodoTask task) => await _httpClient.PostAsJsonAsync("api/todotasks", task);
+    public async Task CreateTaskAsync(TodoTask task, List<int>? selectedUserIds = null, bool assignToAll = false)
+        => await _httpClient.PostAsJsonAsync("api/todotasks", new { task, selectedUserIds, assignToAllInBranch = assignToAll });
     public async Task UpdateTaskAsync(int id, TodoTask task) => await _httpClient.PutAsJsonAsync($"api/todotasks/{id}", task);
     public async Task DeleteTaskAsync(int id) => await _httpClient.DeleteAsync($"api/todotasks/{id}");
 
     public async Task<List<object>> GetCalendarEventsAsync() => await _httpClient.GetFromJsonAsync<List<object>>("api/calendar/events") ?? new();
-    public async Task UpdateCalendarEventAsync(string type, int dbId, DateTime newDate)
+    public async Task UpdateCalendarEventAsync(string type, int dbId, DateTime newDate, TodoStatus? status = null)
     {
-        await _httpClient.PostAsJsonAsync("api/calendar/update-event", new { type, dbId, newDate });
+        await _httpClient.PostAsJsonAsync("api/calendar/update-event", new { type, dbId, newDate, status });
     }
+
+    public async Task<List<Client>> GetClientsAsync(int? branchId = null) => await _httpClient.GetFromJsonAsync<List<Client>>("api/clients" + (branchId.HasValue ? "?branchId=" + branchId : "")) ?? new();
+    public async Task CreateClientAsync(Client client) => await _httpClient.PostAsJsonAsync("api/clients", client);
+    public async Task<List<TaskType>> GetTaskTypesAsync() => await _httpClient.GetFromJsonAsync<List<TaskType>>("api/tasktypes") ?? new();
+    public async Task<List<Priority>> GetPrioritiesAsync() => await _httpClient.GetFromJsonAsync<List<Priority>>("api/priorities") ?? new();
+    public async Task<List<User>> GetUsersAsync() => await _httpClient.GetFromJsonAsync<List<User>>("api/users") ?? new();
+
+    public async Task<List<WorkLog>> GetWorkLogsAsync(int? userId = null, int? month = null, int? year = null)
+    {
+        var url = "api/worklogs?";
+        if (userId.HasValue) url += $"userId={userId}&";
+        if (month.HasValue) url += $"month={month}&";
+        if (year.HasValue) url += $"year={year}&";
+        return await _httpClient.GetFromJsonAsync<List<WorkLog>>(url) ?? new();
+    }
+
+    public async Task CreateWorkLogAsync(WorkLog log) => await _httpClient.PostAsJsonAsync("api/worklogs", log);
+
+    public async Task<List<dynamic>> GetWorkLogReportAsync(int month, int year)
+    {
+        return await _httpClient.GetFromJsonAsync<List<dynamic>>($"api/worklogs/report?month={month}&year={year}") ?? new();
+    }
+
+    public async Task<dynamic> GetDashboardStatsAsync()
+    {
+        return await _httpClient.GetFromJsonAsync<dynamic>("api/dashboard/stats") ?? new { };
+    }
+    public async Task<List<TodoTask>> GetKanbanTasksAsync()
+    {
+        return await _httpClient.GetFromJsonAsync<List<TodoTask>>("api/dashboard/kanban") ?? new();
+    }
+    public async Task<List<dynamic>> GetBranchesSummaryAsync()
+    {
+        return await _httpClient.GetFromJsonAsync<List<dynamic>>("api/dashboard/branches-summary") ?? new();
+    }
+
+    public async Task<dynamic> GetGoogleCalendarStatusAsync() => await _httpClient.GetFromJsonAsync<dynamic>("api/googlecalendar/status") ?? new { };
+    public async Task<dynamic> ConnectGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/connect", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
+    public async Task<dynamic> SyncGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/sync", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
+    public async Task<dynamic> DisconnectGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/disconnect", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
 }

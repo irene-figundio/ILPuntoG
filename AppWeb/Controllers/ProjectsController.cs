@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace AppWeb.Controllers;
 
+[Microsoft.AspNetCore.Authorization.Authorize]
 public class ProjectsController : Controller
 {
     private readonly ApiService _apiService;

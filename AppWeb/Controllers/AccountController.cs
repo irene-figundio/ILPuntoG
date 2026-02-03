@@ -24,7 +24,19 @@ public class AccountController : Controller
         var token = await _apiService.LoginAsync(username, password);
         if (token != null)
         {
-            Response.Cookies.Append("JwtToken", token, new CookieOptions { HttpOnly = true, Secure = true });
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var claims = jwtToken.Claims.ToList();
+            claims.Add(new System.Security.Claims.Claim("Token", token));
+
+            var identity = new System.Security.Claims.ClaimsIdentity(claims, "Cookies");
+            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+            await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(HttpContext, "Cookies", principal);
+
+            // Also keep the token cookie for ApiService
+            Response.Cookies.Append("JwtToken", token, new CookieOptions { HttpOnly = true, Secure = Request.IsHttps });
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -51,9 +63,11 @@ public class AccountController : Controller
         return View();
     }
 
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(HttpContext, "Cookies");
         Response.Cookies.Delete("JwtToken");
+        Response.Cookies.Delete("AppAuth");
         return RedirectToAction("Index", "Home");
     }
 }

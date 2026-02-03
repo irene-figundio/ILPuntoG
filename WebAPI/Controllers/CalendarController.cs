@@ -42,18 +42,15 @@ public class CalendarController : ControllerBase
 
         foreach (var task in tasks)
         {
-            if (task.Deadline.HasValue)
+            events.Add(new
             {
-                events.Add(new
-                {
-                    id = $"task-{task.Id}",
-                    title = $"[TASK] {task.Title}",
-                    start = task.Deadline.Value.ToString("yyyy-MM-ddTHH:mm:ss"),
-                    allDay = true,
-                    backgroundColor = "#28a745",
-                    extendedProps = new { type = "task", dbId = task.Id }
-                });
-            }
+                id = $"task-{task.Id}",
+                    title = $"{(task.Status == TodoStatus.Completed ? "✅" : "🕒")} [TASK] {task.Title}",
+                start = task.Deadline.ToString("yyyy-MM-ddTHH:mm:ss"),
+                allDay = true,
+                    backgroundColor = task.Status == TodoStatus.Completed ? "#6c757d" : "#28a745",
+                    extendedProps = new { type = "task", dbId = task.Id, status = task.Status }
+            });
         }
 
         return Ok(events);
@@ -75,6 +72,12 @@ public class CalendarController : ControllerBase
             var task = await _todoTaskRepository.GetByIdAsync(request.DbId);
             if (task == null) return NotFound();
             task.Deadline = request.NewDate;
+            if (request.Status.HasValue)
+            {
+                task.Status = request.Status.Value;
+                if (task.Status == TodoStatus.Completed && task.ProcessedAt == null)
+                    task.ProcessedAt = DateTime.Now;
+            }
             _todoTaskRepository.Update(task);
             await _todoTaskRepository.SaveChangesAsync();
         }
@@ -92,4 +95,5 @@ public class UpdateEventRequest
     public string Type { get; set; } = string.Empty;
     public int DbId { get; set; }
     public DateTime NewDate { get; set; }
+    public TodoStatus? Status { get; set; }
 }

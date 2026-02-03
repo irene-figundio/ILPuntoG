@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Models;
 
-public class Branch : IAuditableEntity
+public class Branch
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -11,8 +11,6 @@ public class Branch : IAuditableEntity
     // Navigation properties
     public ICollection<Project> Projects { get; set; } = new List<Project>();
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public int? CreatedBy { get; set; } = null;
-    public DateTime? ModifiedAt { get; set; } = null;
-    public int? ModifiedBy { get; set; } = null;
+    public List<UserBranch> UserBranches { get; set; } = new();
+    public List<ClientBranch> ClientBranches { get; set; } = new();
 }

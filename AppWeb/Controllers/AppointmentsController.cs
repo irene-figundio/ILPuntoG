@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace AppWeb.Controllers;
 
+[Microsoft.AspNetCore.Authorization.Authorize]
 public class AppointmentsController : Controller
 {
     private readonly ApiService _apiService;

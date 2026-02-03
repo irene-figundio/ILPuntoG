@@ -1,21 +1,34 @@
 @{
-    ViewData["Title"] = "Calendario";
+    ViewData["Title"] = "Calendario Interattivo";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="fas fa-calendar-alt me-2"></i>Calendario Interattivo</h2>
-</div>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+        <div>
+            <h2 class="mb-0 fw-bold text-primary"><i class="fas fa-calendar-alt me-2"></i>Calendario & Kanban</h2>
+            <p class="text-muted mb-0">Gestisci appuntamenti e scadenze trascinando gli elementi.</p>
+        </div>
+        <div id="google-integration-area" class="d-flex gap-2">
+            <!-- Dynamic Buttons will appear here -->
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body">
-        <div id="calendar"></div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 @section Scripts {
-    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css' rel='stylesheet' />
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             var calendarEl = document.getElementById('calendar');
@@ -28,42 +41,115 @@
                 },
                 locale: 'it',
                 editable: true,
+                droppable: true,
                 events: '/Calendar/GetEvents',
+                eventClick: function(info) {
+                    if (info.event.extendedProps.type === 'task' && info.event.extendedProps.status !== 2) { // 2 = Completed
+                        if (confirm('Vuoi segnare questo task come COMPLETATO?')) {
+                            updateEvent(info.event, info.event.start, 2);
+                        }
+                    } else if (info.event.extendedProps.type === 'appointment') {
+                        alert('Appuntamento: ' + info.event.title);
+                    }
+                },
                 eventDrop: function(info) {
-                    updateEvent(info.event);
+                    updateEvent(info.event, info.event.start);
                 },
                 eventResize: function(info) {
-                    updateEvent(info.event);
+                    updateEvent(info.event, info.event.start);
                 }
             });
             calendar.render();
 
-            function updateEvent(event) {
-                var type = event.extendedProps.type;
-                var dbId = event.extendedProps.dbId;
-                var newDate = event.start.toISOString();
+            function updateEvent(event, newDate, newStatus) {
+                var data = {
+                    type: event.extendedProps.type,
+                    dbId: event.extendedProps.dbId,
+                    newDate: newDate.toISOString(),
+                    status: newStatus
+                };
 
                 fetch('/Calendar/UpdateEvent', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `type=${type}&dbId=${dbId}&newDate=${newDate}`
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(data)
                 }).then(response => {
-                    if (!response.ok) {
-                        alert('Errore durante l\'aggiornamento dell\'evento.');
-                        event.revert();
+                    if (response.ok) {
+                        calendar.refetchEvents();
+                    } else {
+                        alert('Errore durante l\'aggiornamento');
+                        calendar.refetchEvents();
                     }
                 });
             }
+
+            // Google Integration Logic
+            function refreshGoogleUI() {
+                fetch('/Calendar/GetGoogleStatus')
+                    .then(r => r.json())
+                    .then(data => {
+                        const area = document.getElementById('google-integration-area');
+                        if (data.isConnected || data.IsConnected) {
+                            area.innerHTML = `
+                                <button class="btn btn-outline-success shadow-sm" onclick="syncGoogle()">
+                                    <i class="fab fa-google me-1"></i> Sincronizza ora
+                                </button>
+                                <button class="btn btn-outline-danger shadow-sm" onclick="disconnectGoogle()">
+                                    <i class="fas fa-unlink"></i>
+                                </button>
+                            `;
+                        } else {
+                            area.innerHTML = `
+                                <button class="btn btn-primary shadow-sm" onclick="connectGoogle()">
+                                    <i class="fab fa-google me-2"></i> Collega Google Calendar
+                                </button>
+                            `;
+                        }
+                    });
+            }
+
+            window.connectGoogle = function() {
+                fetch('/Calendar/ConnectGoogle', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        alert(data.message || data.Message);
+                        refreshGoogleUI();
+                    });
+            };
+
+            window.syncGoogle = function() {
+                const area = document.getElementById('google-integration-area');
+                const originalHtml = area.innerHTML;
+                area.innerHTML = '<span class="text-primary"><i class="fas fa-sync fa-spin me-2"></i>Sincronizzazione...</span>';
+
+                fetch('/Calendar/SyncGoogle', { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        alert(data.message || data.Message);
+                        refreshGoogleUI();
+                        calendar.refetchEvents();
+                    });
+            };
+
+            window.disconnectGoogle = function() {
+                if (confirm('Vuoi scollegare Google Calendar?')) {
+                    fetch('/Calendar/DisconnectGoogle', { method: 'POST' })
+                        .then(() => refreshGoogleUI());
+                }
+            };
+
+            refreshGoogleUI();
         });
     </script>
-    <style>
-        #calendar {
-            height: 700px;
-        }
-        .fc-event {
-            cursor: pointer;
-        }
-    </style>
 }
+
+<style>
+    #calendar {
+        height: 700px;
+    }
+    .fc-event {
+        cursor: pointer;
+        padding: 2px 5px;
+        font-size: 0.85rem;
+    }
+</style>

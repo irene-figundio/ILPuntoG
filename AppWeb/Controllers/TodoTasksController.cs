@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace AppWeb.Controllers;
 
+[Microsoft.AspNetCore.Authorization.Authorize]
 public class TodoTasksController : Controller
 {
     private readonly ApiService _apiService;
@@ -28,13 +29,20 @@ public class TodoTasksController : Controller
     {
         var projects = await _apiService.GetProjectsAsync();
         ViewBag.Projects = new SelectList(projects, "Id", "Name", projectId);
-        return View(new TodoTask { ProjectId = projectId ?? 0, Status = TodoStatus.Pending });
+        ViewBag.Priorities = new SelectList(await _apiService.GetPrioritiesAsync(), "Id", "Name");
+        ViewBag.TaskTypes = new SelectList(await _apiService.GetTaskTypesAsync(), "Id", "Name");
+        ViewBag.Users = new SelectList(await _apiService.GetUsersAsync(), "Id", "Name");
+
+        var clients = await _apiService.GetClientsAsync();
+        ViewBag.Clients = new SelectList(clients, "Id", "Name");
+
+        return View(new TodoTask { ProjectId = projectId ?? 0, Status = TodoStatus.Pending, Deadline = DateTime.Now.AddDays(1) });
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(TodoTask task)
+    public async Task<IActionResult> Create(TodoTask task, List<int> SelectedUserIds, bool AssignToAll)
     {
-        await _apiService.CreateTaskAsync(task);
+        await _apiService.CreateTaskAsync(task, SelectedUserIds, AssignToAll);
         return RedirectToAction(nameof(Index), new { projectId = task.ProjectId });
     }
 

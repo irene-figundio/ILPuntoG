@@ -35,7 +35,8 @@ public class AccountController : ControllerBase
             Name = request.Name,
             Email = request.Email,
             Username = request.Username,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password)
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            RoleId = 1 // Default to 'User'
         };
 
         await _userRepository.AddAsync(user);
@@ -48,7 +49,7 @@ public class AccountController : ControllerBase
     public async Task<IActionResult> Login(LoginRequest request)
     {
         var user = await _userRepository.GetByUsernameAsync(request.Username);
-        user = new User();
+
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
             return Unauthorized("Invalid username or password.");
@@ -61,7 +62,12 @@ public class AccountController : ControllerBase
     private string GenerateJwtToken(User user)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
-        var key = Encoding.ASCII.GetBytes(jwtSettings["Key"] ?? "super_secret_key_that_is_long_enough_for_sha256");
+        var secret = jwtSettings["Key"];
+        if (string.IsNullOrEmpty(secret))
+        {
+            throw new InvalidOperationException("JWT Key is not configured in appsettings.json");
+        }
+        var key = Encoding.ASCII.GetBytes(secret);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -69,7 +75,8 @@ public class AccountController : ControllerBase
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role?.Name ?? "User")
             }),
             Expires = DateTime.UtcNow.AddDays(7),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
