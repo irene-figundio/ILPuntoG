@@ -2,7 +2,7 @@ using System;
 
 namespace Models;
 
-public class TodoTask
+public class TodoTask : IAuditableEntity
 {
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -16,4 +16,8 @@ public class TodoTask
 
     public int? AssignedToUserId { get; set; }
     public User? AssignedToUser { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public int? CreatedBy { get; set; } = null;
+    public DateTime? ModifiedAt { get; set; } = null;
+    public int? ModifiedBy { get; set; } = null;
 }

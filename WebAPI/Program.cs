@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Repository;
+using Repository.Interceptors;
+using Repository.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,14 +37,31 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddOpenApi();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, HttpContextCurrentUserService>();
 
-builder.Services.AddDbContext<ApplicationDbContext>();
+builder.Services.AddScoped<Func<int?>>(sp =>
+{
+    var svc = sp.GetRequiredService<ICurrentUserService>();
+    return svc.GetUserId;
+});
 
-builder.Services.AddScoped<IBranchRepository, BranchRepository>();
-builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
-builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
-builder.Services.AddScoped<ITodoTaskRepository, TodoTaskRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddDbContext<ApplicationDbContext>((sp, opts) =>
+{
+    opts.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"));
+
+    var interceptor = sp.GetRequiredService<ModificationAuditInterceptor>();
+    opts.AddInterceptors(interceptor);
+});
+builder.Services.AddRepositories();
+
+
+//builder.Services.AddScoped<IBranchRepository, BranchRepository>();
+//builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+//builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+//builder.Services.AddScoped<ITodoTaskRepository, TodoTaskRepository>();
+//builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 
