@@ -60,6 +60,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<TaskType> TaskTypes { get; set; }
     public DbSet<Priority> Priorities { get; set; }
     public DbSet<WorkLog> WorkLogs { get; set; }
+    public DbSet<Document> Documents { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<UserBranch> UserBranches { get; set; }
     public DbSet<ClientBranch> ClientBranches { get; set; }
     public DbSet<TaskAssignment> TaskAssignments { get; set; }
@@ -131,10 +133,13 @@ public class ApplicationDbContext : DbContext
 
         // Seed TaskTypes
         modelBuilder.Entity<TaskType>().HasData(
-            new TaskType { Id = 1, Name = "Sopralluogo" },
-            new TaskType { Id = 2, Name = "Riparazione" },
-            new TaskType { Id = 3, Name = "Installazione" },
-            new TaskType { Id = 4, Name = "Manutenzione" }
+            new TaskType { Id = 1, Name = "Sopralluogo", IsBase = true },
+            new TaskType { Id = 2, Name = "Riparazione", IsBase = true },
+            new TaskType { Id = 3, Name = "Installazione", IsBase = true },
+            new TaskType { Id = 4, Name = "Manutenzione", IsBase = true },
+            new TaskType { Id = 5, Name = "Sviluppo", IsBase = false },
+            new TaskType { Id = 6, Name = "Ferie", IsBase = false },
+            new TaskType { Id = 7, Name = "Malattia", IsBase = false }
         );
     }
 }

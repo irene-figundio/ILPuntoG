@@ -36,5 +36,7 @@ public class TodoTask
     public int TaskTypeId { get; set; }
     public TaskType? TaskType { get; set; }
 
+    public string? GitLabRepoUrl { get; set; }
+
     public List<TaskAssignment> TaskAssignments { get; set; } = new();
 }

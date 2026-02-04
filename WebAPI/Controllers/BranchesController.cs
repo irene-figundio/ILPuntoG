@@ -13,10 +13,12 @@ namespace WebAPI.Controllers;
 public class BranchesController : ControllerBase
 {
     private readonly IBranchRepository _repository;
+    private readonly WebAPI.Services.AuditService _auditService;
 
-    public BranchesController(IBranchRepository repository)
+    public BranchesController(IBranchRepository repository, WebAPI.Services.AuditService auditService)
     {
         _repository = repository;
+        _auditService = auditService;
     }
 
     [HttpGet]
@@ -43,6 +45,7 @@ public class BranchesController : ControllerBase
     {
         await _repository.AddAsync(branch);
         await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Create", "Branch", branch.Id.ToString(), branch.Name);
         return CreatedAtAction(nameof(GetBranch), new { id = branch.Id }, branch);
     }
 
@@ -53,6 +56,7 @@ public class BranchesController : ControllerBase
         if (id != branch.Id) return BadRequest();
         _repository.Update(branch);
         await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Update", "Branch", branch.Id.ToString(), branch.Name);
         return NoContent();
     }
 
@@ -64,6 +68,7 @@ public class BranchesController : ControllerBase
         if (branch == null) return NotFound();
         _repository.Remove(branch);
         await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Delete", "Branch", id.ToString(), branch.Name);
         return NoContent();
     }
 }

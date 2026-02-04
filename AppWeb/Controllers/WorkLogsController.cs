@@ -19,6 +19,7 @@ public class WorkLogsController : Controller
     {
         var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
         var logs = await _apiService.GetWorkLogsAsync(userId);
+        ViewBag.ApiBaseUrl = _apiService.GetBaseUrl();
         return View(logs);
     }
 

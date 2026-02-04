@@ -17,12 +17,14 @@ public class TodoTasksController : ControllerBase
     private readonly ITodoTaskRepository _repository;
     private readonly IProjectRepository _projectRepository;
     private readonly IUserBranchRepository _userBranchRepository;
+    private readonly WebAPI.Services.AuditService _auditService;
 
-    public TodoTasksController(ITodoTaskRepository repository, IProjectRepository projectRepository, IUserBranchRepository userBranchRepository)
+    public TodoTasksController(ITodoTaskRepository repository, IProjectRepository projectRepository, IUserBranchRepository userBranchRepository, WebAPI.Services.AuditService auditService)
     {
         _repository = repository;
         _projectRepository = projectRepository;
         _userBranchRepository = userBranchRepository;
+        _auditService = auditService;
     }
 
     private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
@@ -72,6 +74,8 @@ public class TodoTasksController : ControllerBase
         var task = request.Task;
         await _repository.AddAsync(task);
         await _repository.SaveChangesAsync();
+
+        await _auditService.LogAsync("Create", "TodoTask", task.Id.ToString(), $"Title: {task.Title}");
 
         if (request.AssignToAllInBranch)
         {
@@ -127,6 +131,9 @@ public class TodoTasksController : ControllerBase
 
         _repository.Update(task);
         await _repository.SaveChangesAsync();
+
+        await _auditService.LogAsync("Update", "TodoTask", task.Id.ToString(), $"Status: {task.Status}");
+
         return NoContent();
     }
 
@@ -148,6 +155,9 @@ public class TodoTasksController : ControllerBase
 
         _repository.Remove(task);
         await _repository.SaveChangesAsync();
+
+        await _auditService.LogAsync("Delete", "TodoTask", task.Id.ToString(), $"Title: {task.Title}");
+
         return NoContent();
     }
 }

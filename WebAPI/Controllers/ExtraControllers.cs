@@ -31,7 +31,12 @@ public class PrioritiesController : ControllerBase
 public class WorkLogsController : ControllerBase
 {
     private readonly IWorkLogRepository _repository;
-    public WorkLogsController(IWorkLogRepository repository) { _repository = repository; }
+    private readonly WebAPI.Services.AuditService _auditService;
+    public WorkLogsController(IWorkLogRepository repository, WebAPI.Services.AuditService auditService)
+    {
+        _repository = repository;
+        _auditService = auditService;
+    }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<WorkLog>>> Get(int? userId, int? month, int? year)
@@ -69,6 +74,28 @@ public class WorkLogsController : ControllerBase
     {
         await _repository.AddAsync(log);
         await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Create", "WorkLog", log.Id.ToString(), $"Hours: {log.Hours}, Type: {log.Type}");
         return Ok(log);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Put(int id, WorkLog log)
+    {
+        if (id != log.Id) return BadRequest();
+        _repository.Update(log);
+        await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Update", "WorkLog", log.Id.ToString(), $"Hours: {log.Hours}, Type: {log.Type}");
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var log = await _repository.GetByIdAsync(id);
+        if (log == null) return NotFound();
+        _repository.Remove(log);
+        await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Delete", "WorkLog", id.ToString(), $"Type: {log.Type}");
+        return NoContent();
     }
 }

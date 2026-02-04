@@ -15,11 +15,13 @@ public class AccountController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _configuration;
+    private readonly WebAPI.Services.AuditService _auditService;
 
-    public AccountController(IUserRepository userRepository, IConfiguration configuration)
+    public AccountController(IUserRepository userRepository, IConfiguration configuration, WebAPI.Services.AuditService auditService)
     {
         _userRepository = userRepository;
         _configuration = configuration;
+        _auditService = auditService;
     }
 
     [HttpPost("register")]
@@ -42,6 +44,8 @@ public class AccountController : ControllerBase
         await _userRepository.AddAsync(user);
         await _userRepository.SaveChangesAsync();
 
+        await _auditService.LogAsync("Register", "User", user.Id.ToString(), $"Username: {user.Username}", user.Id);
+
         return Ok(new { message = "Registration successful" });
     }
 
@@ -56,6 +60,9 @@ public class AccountController : ControllerBase
         }
 
         var token = GenerateJwtToken(user);
+
+        await _auditService.LogAsync("Login", "User", user.Id.ToString(), $"Username: {user.Username}", user.Id);
+
         return Ok(new { token, user = new { user.Id, user.Username, user.Name, user.Email } });
     }
 

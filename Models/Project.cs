@@ -12,6 +12,9 @@ public class Project
     public int BranchId { get; set; }
     public Branch? Branch { get; set; }
 
+    public int? ClientId { get; set; }
+    public Client? Client { get; set; }
+
     public ICollection<TodoTask> Tasks { get; set; } = new List<TodoTask>();
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }

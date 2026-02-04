@@ -1,7 +1,7 @@
-Using launch settings from AppWeb/Properties/launchSettings.json...
+Using launch settings from /app/AppWeb/Properties/launchSettings.json...
 Building...
 info: Microsoft.Hosting.Lifetime[14]
-      Now listening on: http://localhost:5157
+      Now listening on: http://localhost:5158
 info: Microsoft.Hosting.Lifetime[0]
       Application started. Press Ctrl+C to shut down.
 info: Microsoft.Hosting.Lifetime[0]
@@ -10,67 +10,3 @@ info: Microsoft.Hosting.Lifetime[0]
       Content root path: /app/AppWeb
 warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
       Failed to determine the https port for redirect.
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request POST http://localhost:5281/api/account/login
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request POST http://localhost:5281/api/account/login
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 2505.8875ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 2640.3931ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5281/api/dashboard/stats
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5281/api/dashboard/stats
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 629.8617ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 630.552ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5281/api/dashboard/kanban
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5281/api/dashboard/kanban
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 104.589ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 104.9369ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request POST http://localhost:5281/api/account/login
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request POST http://localhost:5281/api/account/login
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 363.0076ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 363.2971ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5281/api/dashboard/stats
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5281/api/dashboard/stats
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 13.0268ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 13.2237ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5281/api/dashboard/kanban
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5281/api/dashboard/kanban
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 3.9673ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 4.1927ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5281/api/calendar/events
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5281/api/calendar/events
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 27.8151ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 28.0488ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[100]
-      Start processing HTTP request GET http://localhost:5281/api/googlecalendar/status
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[100]
-      Sending HTTP request GET http://localhost:5281/api/googlecalendar/status
-info: System.Net.Http.HttpClient.ApiService.ClientHandler[101]
-      Received HTTP response headers after 17.5218ms - 200
-info: System.Net.Http.HttpClient.ApiService.LogicalHandler[101]
-      End processing HTTP request after 17.7756ms - 200

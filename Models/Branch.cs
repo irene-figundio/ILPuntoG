@@ -7,6 +7,7 @@ public class Branch
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
+    public string HexColor { get; set; } = "#3498db"; // Default color
 
     // Navigation properties
     public ICollection<Project> Projects { get; set; } = new List<Project>();
