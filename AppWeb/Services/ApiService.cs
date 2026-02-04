@@ -126,4 +126,22 @@ public class ApiService {
         await _httpClient.PostAsync("api/documents/upload", content);
     }
     public async Task<List<Document>> GetDocumentsAsync() => await _httpClient.GetFromJsonAsync<List<Document>>("api/documents") ?? new();
+
+    public async Task<dynamic> ForgotPasswordAsync(string email)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/account/forgot-password", new { email });
+        return await response.Content.ReadFromJsonAsync<dynamic>() ?? new { };
+    }
+
+    public async Task<bool> ResetPasswordAsync(string username, string token, string newPassword)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/account/reset-password", new { username, token, newPassword });
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ChangePasswordAsync(string oldPassword, string newPassword)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/users/change-password", new { oldPassword, newPassword });
+        return response.IsSuccessStatusCode;
+    }
 }

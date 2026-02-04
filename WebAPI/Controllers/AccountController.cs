@@ -66,6 +66,44 @@ public class AccountController : ControllerBase
         return Ok(new { token, user = new { user.Id, user.Username, user.Name, user.Email } });
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        var users = await _userRepository.GetAllAsync();
+        var user = users.FirstOrDefault(u => u.Email == request.Email);
+        if (user == null)
+        {
+            // Don't reveal if user exists or not for security, but for this task we'll be helpful
+            return BadRequest("User with this email not found.");
+        }
+
+        // In a real app, generate a unique token and send an email
+        var token = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Username));
+
+        await _auditService.LogAsync("ForgotPassword", "User", user.Id.ToString(), $"Email: {user.Email}", user.Id);
+
+        return Ok(new { message = "Password reset link has been generated (simulated)", token, username = user.Username });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        var user = await _userRepository.GetByUsernameAsync(request.Username);
+        if (user == null) return BadRequest("Invalid request.");
+
+        // Simple validation of simulated token
+        var expectedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Username));
+        if (request.Token != expectedToken) return BadRequest("Invalid token.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        await _auditService.LogAsync("ResetPassword", "User", user.Id.ToString(), $"Username: {user.Username}", user.Id);
+
+        return Ok(new { message = "Password has been reset successfully." });
+    }
+
     private string GenerateJwtToken(User user)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
