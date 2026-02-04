@@ -5,8 +5,6 @@ ALTER TABLE TaskTypes ADD IsBase BIT NOT NULL DEFAULT 1;
 
 -- Seed new TaskTypes
 INSERT INTO TaskTypes (Id, Name, IsBase) VALUES (5, 'Sviluppo', 0);
-INSERT INTO TaskTypes (Id, Name, IsBase) VALUES (6, 'Ferie', 0);
-INSERT INTO TaskTypes (Id, Name, IsBase) VALUES (7, 'Malattia', 0);
 
 -- 2. Update TodoTasks
 ALTER TABLE TodoTasks ADD GitLabRepoUrl NVARCHAR(MAX) NULL;

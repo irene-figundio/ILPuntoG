@@ -137,9 +137,7 @@ public class ApplicationDbContext : DbContext
             new TaskType { Id = 2, Name = "Riparazione", IsBase = true },
             new TaskType { Id = 3, Name = "Installazione", IsBase = true },
             new TaskType { Id = 4, Name = "Manutenzione", IsBase = true },
-            new TaskType { Id = 5, Name = "Sviluppo", IsBase = false },
-            new TaskType { Id = 6, Name = "Ferie", IsBase = false },
-            new TaskType { Id = 7, Name = "Malattia", IsBase = false }
+            new TaskType { Id = 5, Name = "Sviluppo", IsBase = false }
         );
     }
 }
