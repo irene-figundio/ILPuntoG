@@ -8,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<WebAPI.Services.AuditService>();
 
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secret = jwtSettings["Key"];
@@ -44,7 +46,13 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlServer(connectionString);
+    if (connectionString != null && connectionString.Contains("Data Source=")) {
+        options.UseSqlite(connectionString);
+    } else if (!string.IsNullOrEmpty(connectionString)) {
+        options.UseSqlServer(connectionString);
+    } else {
+        options.UseSqlite("Data Source=IlPuntoG.db");
+    }
 });
 
 builder.Services.AddScoped<IBranchRepository, BranchRepository>();
@@ -57,6 +65,8 @@ builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<ITaskTypeRepository, TaskTypeRepository>();
 builder.Services.AddScoped<IPriorityRepository, PriorityRepository>();
 builder.Services.AddScoped<IWorkLogRepository, WorkLogRepository>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IUserBranchRepository, UserBranchRepository>();
 builder.Services.AddScoped<IClientBranchRepository, ClientBranchRepository>();
 builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();

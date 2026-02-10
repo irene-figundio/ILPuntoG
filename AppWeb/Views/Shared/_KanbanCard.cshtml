@@ -9,6 +9,14 @@
             <span class="badge bg-light text-dark small border">@Model.TaskType?.Name</span>
         </div>
         <p class="card-text small text-muted text-truncate">@Model.Description</p>
+        @if (!string.IsNullOrEmpty(Model.GitLabRepoUrl))
+        {
+            <div class="mb-2">
+                <a href="@Model.GitLabRepoUrl" target="_blank" class="small text-primary text-decoration-none" onclick="event.stopPropagation();">
+                    <i class="fab fa-gitlab me-1"></i>Repo GitLab
+                </a>
+            </div>
+        }
         <div class="d-flex justify-content-between align-items-center mt-3">
             <small class="text-@(Model.Deadline < DateTime.Now ? "danger" : "muted") fw-bold">
                 <i class="fas fa-calendar-day me-1"></i> @Model.Deadline.ToString("dd MMM")

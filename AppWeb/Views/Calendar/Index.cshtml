@@ -16,6 +16,44 @@
         </div>
     </div>
 
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body py-2">
+                    <form id="calendarFilters" class="row g-2 align-items-center">
+                        <div class="col-md-2">
+                            <select name="branchId" class="form-select form-select-sm">
+                                <option value="">Sede: Tutte</option>
+                                @foreach (var b in ViewBag.Branches) { <option value="@b.Id">@b.Name</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="projectId" class="form-select form-select-sm">
+                                <option value="">Progetto: Tutti</option>
+                                @foreach (var p in ViewBag.Projects) { <option value="@p.Id">@p.Name</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="userId" class="form-select form-select-sm">
+                                <option value="">Utente: Tutti</option>
+                                @foreach (var u in ViewBag.Users) { <option value="@u.Id">@u.Name</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="clientId" class="form-select form-select-sm">
+                                <option value="">Cliente: Tutti</option>
+                                @foreach (var c in ViewBag.Clients) { <option value="@c.Id">@c.Name</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-primary w-100" onclick="applyFilters()">Filtra</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm border-0">
@@ -42,31 +80,49 @@
                 locale: 'it',
                 editable: true,
                 droppable: true,
-                events: '/Calendar/GetEvents',
+                events: function(info, successCallback, failureCallback) {
+                    const params = new URLSearchParams(new FormData(document.getElementById('calendarFilters'))).toString();
+                    fetch('/Calendar/GetEvents?' + params)
+                        .then(r => r.json())
+                        .then(data => successCallback(data))
+                        .catch(err => failureCallback(err));
+                },
+                selectable: true,
+                select: function(info) {
+                    $('#createModal').modal('show');
+                    $('#createStart').val(info.startStr.split('T')[0]);
+                },
                 eventClick: function(info) {
-                    if (info.event.extendedProps.type === 'task' && info.event.extendedProps.status !== 2) { // 2 = Completed
-                        if (confirm('Vuoi segnare questo task come COMPLETATO?')) {
-                            updateEvent(info.event, info.event.start, 2);
-                        }
-                    } else if (info.event.extendedProps.type === 'appointment') {
-                        alert('Appuntamento: ' + info.event.title);
+                    const props = info.event.extendedProps;
+                    if (props.type === 'task') {
+                         window.location.href = '/TodoTasks/Edit/' + props.dbId;
+                    } else if (props.type === 'appointment') {
+                         openEditAppointment(props.dbId, info.event.title, info.event.start);
                     }
                 },
                 eventDrop: function(info) {
                     updateEvent(info.event, info.event.start);
                 },
                 eventResize: function(info) {
-                    updateEvent(info.event, info.event.start);
+                    var duration = null;
+                    if (info.event.end) {
+                        var diff = info.event.end - info.event.start;
+                        var hours = Math.floor(diff / 3600000);
+                        var minutes = Math.floor((diff % 3600000) / 60000);
+                        duration = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':00';
+                    }
+                    updateEvent(info.event, info.event.start, null, duration);
                 }
             });
             calendar.render();
 
-            function updateEvent(event, newDate, newStatus) {
+            function updateEvent(event, newDate, newStatus, duration) {
                 var data = {
                     type: event.extendedProps.type,
                     dbId: event.extendedProps.dbId,
                     newDate: newDate.toISOString(),
-                    status: newStatus
+                    status: newStatus,
+                    duration: duration
                 };
 
                 fetch('/Calendar/UpdateEvent', {
@@ -139,9 +195,94 @@
             };
 
             refreshGoogleUI();
+
+            window.applyFilters = function() {
+                calendar.refetchEvents();
+            };
         });
     </script>
 }
+
+<!-- Create Modal Choice -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crea Nuovo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <input type="hidden" id="createStart" />
+                <div class="d-grid gap-3">
+                    <button class="btn btn-lg btn-outline-primary" onclick="openCreate('task')">
+                        <i class="fas fa-tasks me-2"></i>Nuova Attività (Task)
+                    </button>
+                    <button class="btn btn-lg btn-outline-info" onclick="openCreate('appointment')">
+                        <i class="fas fa-calendar-check me-2"></i>Nuovo Appuntamento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointment Edit Modal -->
+<div class="modal fade" id="apptEditModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="apptEditTitle">Modifica Appuntamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Cosa desideri fare con questo appuntamento?</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-danger" onclick="deleteAppointment()">
+                        <i class="fas fa-trash me-2"></i>Elimina Appuntamento
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" id="apptEditId" />
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openCreate(type) {
+        const start = document.getElementById('createStart').value;
+        if (type === 'task') {
+            window.location.href = '/TodoTasks/Create?deadline=' + start;
+        } else {
+            window.location.href = '/Appointments/Create?startTime=' + start;
+        }
+    }
+
+    function openEditAppointment(id, title, start) {
+        $('#apptEditTitle').text(title);
+        $('#apptEditId').val(id);
+        $('#apptEditModal').modal('show');
+    }
+
+    function deleteAppointment() {
+        const id = document.getElementById('apptEditId').value;
+        if (confirm('Sicuro di voler eliminare questo appuntamento?')) {
+            const data = new URLSearchParams();
+            data.append('id', id);
+            fetch('/Appointments/Delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: data
+            })
+            .then(() => {
+                $('#apptEditModal').modal('hide');
+                location.reload();
+            });
+        }
+    }
+</script>
 
 <style>
     #calendar {

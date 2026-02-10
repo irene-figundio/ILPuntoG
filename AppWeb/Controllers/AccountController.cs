@@ -63,6 +63,42 @@ public class AccountController : Controller
         return View();
     }
 
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ForgotPassword(string email)
+    {
+        var result = await _apiService.ForgotPasswordAsync(email);
+        // In this simulated environment, we show the result. In real life, just a confirmation message.
+        ViewBag.Message = "Se l'email esiste, riceverai istruzioni.";
+        ViewBag.DebugToken = result; // For testing
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string username, string token)
+    {
+        ViewBag.Username = username;
+        ViewBag.Token = token;
+        return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ResetPassword(string username, string token, string newPassword)
+    {
+        var success = await _apiService.ResetPasswordAsync(username, token, newPassword);
+        if (success)
+        {
+            return RedirectToAction("Login");
+        }
+        ViewBag.Error = "Reset fallito.";
+        return View();
+    }
+
     public async Task<IActionResult> Logout()
     {
         await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(HttpContext, "Cookies");

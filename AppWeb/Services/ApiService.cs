@@ -12,6 +12,8 @@ public class ApiService {
         _httpContextAccessor = httpContextAccessor;
     }
 
+    public string GetBaseUrl() => _httpClient.BaseAddress?.ToString() ?? "";
+
     public async Task<string?> LoginAsync(string username, string password)
     {
         var response = await _httpClient.PostAsJsonAsync("api/account/login", new { username, password });
@@ -55,10 +57,18 @@ public class ApiService {
     public async Task UpdateTaskAsync(int id, TodoTask task) => await _httpClient.PutAsJsonAsync($"api/todotasks/{id}", task);
     public async Task DeleteTaskAsync(int id) => await _httpClient.DeleteAsync($"api/todotasks/{id}");
 
-    public async Task<List<object>> GetCalendarEventsAsync() => await _httpClient.GetFromJsonAsync<List<object>>("api/calendar/events") ?? new();
-    public async Task UpdateCalendarEventAsync(string type, int dbId, DateTime newDate, TodoStatus? status = null)
+    public async Task<List<object>> GetCalendarEventsAsync(int? userId = null, int? branchId = null, int? projectId = null, int? clientId = null)
     {
-        await _httpClient.PostAsJsonAsync("api/calendar/update-event", new { type, dbId, newDate, status });
+        var url = "api/calendar/events?";
+        if (userId.HasValue) url += $"userId={userId}&";
+        if (branchId.HasValue) url += $"branchId={branchId}&";
+        if (projectId.HasValue) url += $"projectId={projectId}&";
+        if (clientId.HasValue) url += $"clientId={clientId}&";
+        return await _httpClient.GetFromJsonAsync<List<object>>(url) ?? new();
+    }
+    public async Task UpdateCalendarEventAsync(string type, int dbId, DateTime newDate, TodoStatus? status = null, TimeSpan? duration = null)
+    {
+        await _httpClient.PostAsJsonAsync("api/calendar/update-event", new { type, dbId, newDate, status, duration });
     }
 
     public async Task<List<Client>> GetClientsAsync(int? branchId = null) => await _httpClient.GetFromJsonAsync<List<Client>>("api/clients" + (branchId.HasValue ? "?branchId=" + branchId : "")) ?? new();
@@ -76,7 +86,14 @@ public class ApiService {
         return await _httpClient.GetFromJsonAsync<List<WorkLog>>(url) ?? new();
     }
 
-    public async Task CreateWorkLogAsync(WorkLog log) => await _httpClient.PostAsJsonAsync("api/worklogs", log);
+    public async Task<WorkLog?> CreateWorkLogAsync(WorkLog log)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/worklogs", log);
+        if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<WorkLog>();
+        return null;
+    }
+    public async Task UpdateWorkLogAsync(int id, WorkLog log) => await _httpClient.PutAsJsonAsync($"api/worklogs/{id}", log);
+    public async Task DeleteWorkLogAsync(int id) => await _httpClient.DeleteAsync($"api/worklogs/{id}");
 
     public async Task<List<dynamic>> GetWorkLogReportAsync(int month, int year)
     {
@@ -100,4 +117,31 @@ public class ApiService {
     public async Task<dynamic> ConnectGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/connect", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
     public async Task<dynamic> SyncGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/sync", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
     public async Task<dynamic> DisconnectGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/disconnect", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
+
+    public async Task<List<AuditLog>> GetAuditLogsAsync() => await _httpClient.GetFromJsonAsync<List<AuditLog>>("api/auditlog") ?? new();
+    public async Task CreateAuditLogAsync(AuditLog log) => await _httpClient.PostAsJsonAsync("api/auditlog", log);
+
+    public async Task UploadDocumentAsync(MultipartFormDataContent content)
+    {
+        await _httpClient.PostAsync("api/documents/upload", content);
+    }
+    public async Task<List<Document>> GetDocumentsAsync() => await _httpClient.GetFromJsonAsync<List<Document>>("api/documents") ?? new();
+
+    public async Task<dynamic> ForgotPasswordAsync(string email)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/account/forgot-password", new { email });
+        return await response.Content.ReadFromJsonAsync<dynamic>() ?? new { };
+    }
+
+    public async Task<bool> ResetPasswordAsync(string username, string token, string newPassword)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/account/reset-password", new { username, token, newPassword });
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ChangePasswordAsync(string oldPassword, string newPassword)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/users/change-password", new { oldPassword, newPassword });
+        return response.IsSuccessStatusCode;
+    }
 }

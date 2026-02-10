@@ -13,22 +13,28 @@ public class CalendarController : Controller
         _apiService = apiService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        ViewBag.Branches = await _apiService.GetBranchesAsync();
+        ViewBag.Projects = await _apiService.GetProjectsAsync();
+        ViewBag.Clients = await _apiService.GetClientsAsync();
+        ViewBag.Users = await _apiService.GetUsersAsync();
+        ViewBag.Priorities = await _apiService.GetPrioritiesAsync();
+        ViewBag.TaskTypes = await _apiService.GetTaskTypesAsync();
         return View();
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetEvents()
+    public async Task<IActionResult> GetEvents(int? userId, int? branchId, int? projectId, int? clientId)
     {
-        var events = await _apiService.GetCalendarEventsAsync();
+        var events = await _apiService.GetCalendarEventsAsync(userId, branchId, projectId, clientId);
         return Json(events);
     }
 
     [HttpPost]
-    public async Task<IActionResult> UpdateEvent(string type, int dbId, DateTime newDate, global::Models.TodoStatus? status)
+    public async Task<IActionResult> UpdateEvent(string type, int dbId, DateTime newDate, global::Models.TodoStatus? status, TimeSpan? duration)
     {
-        await _apiService.UpdateCalendarEventAsync(type, dbId, newDate, status);
+        await _apiService.UpdateCalendarEventAsync(type, dbId, newDate, status, duration);
         return Ok();
     }
 

@@ -9,6 +9,9 @@ public class Appointment
     public DateTime StartTime { get; set; }
     public TimeSpan Duration { get; set; }
 
+    public bool IsRecurring { get; set; }
+    public TaskRecurrence Recurrence { get; set; } = TaskRecurrence.None;
+
     public int? ProjectId { get; set; }
     public Project? Project { get; set; }
 
