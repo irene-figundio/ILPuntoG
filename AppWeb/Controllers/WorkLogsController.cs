@@ -31,6 +31,12 @@ public class WorkLogsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _apiService.DeleteWorkLogAsync(id);
+        return RedirectToAction(nameof(Index));
+    }
+
     [Microsoft.AspNetCore.Authorization.Authorize(Roles = Roles.SuperAdmin)]
     public async Task<IActionResult> Report(int? month, int? year)
     {

@@ -49,6 +49,7 @@ public class ApiService {
     public async Task<List<Appointment>> GetAppointmentsAsync(int? branchId = null) => await _httpClient.GetFromJsonAsync<List<Appointment>>("api/appointments" + (branchId.HasValue ? "?branchId=" + branchId : "")) ?? new();
     public async Task<Appointment?> GetAppointmentAsync(int id) => await _httpClient.GetFromJsonAsync<Appointment>($"api/appointments/{id}");
     public async Task CreateAppointmentAsync(Appointment appt) => await _httpClient.PostAsJsonAsync("api/appointments", appt);
+    public async Task UpdateAppointmentAsync(int id, Appointment appt) => await _httpClient.PutAsJsonAsync($"api/appointments/{id}", appt);
     public async Task DeleteAppointmentAsync(int id) => await _httpClient.DeleteAsync($"api/appointments/{id}");
     public async Task<List<TodoTask>> GetTasksAsync(int? projectId = null) => await _httpClient.GetFromJsonAsync<List<TodoTask>>("api/todotasks" + (projectId.HasValue ? "?projectId=" + projectId : "")) ?? new();
     public async Task<TodoTask?> GetTaskAsync(int id) => await _httpClient.GetFromJsonAsync<TodoTask>($"api/todotasks/{id}");
@@ -74,6 +75,8 @@ public class ApiService {
     public async Task<List<Client>> GetClientsAsync(int? branchId = null) => await _httpClient.GetFromJsonAsync<List<Client>>("api/clients" + (branchId.HasValue ? "?branchId=" + branchId : "")) ?? new();
     public async Task<Client?> GetClientAsync(int id) => await _httpClient.GetFromJsonAsync<Client>($"api/clients/{id}");
     public async Task CreateClientAsync(Client client) => await _httpClient.PostAsJsonAsync("api/clients", client);
+    public async Task UpdateClientAsync(int id, Client client) => await _httpClient.PutAsJsonAsync($"api/clients/{id}", client);
+    public async Task DeleteClientAsync(int id) => await _httpClient.DeleteAsync($"api/clients/{id}");
     public async Task<List<TaskType>> GetTaskTypesAsync() => await _httpClient.GetFromJsonAsync<List<TaskType>>("api/tasktypes") ?? new();
     public async Task<List<Priority>> GetPrioritiesAsync() => await _httpClient.GetFromJsonAsync<List<Priority>>("api/priorities") ?? new();
     public async Task<List<User>> GetUsersAsync() => await _httpClient.GetFromJsonAsync<List<User>>("api/users") ?? new();

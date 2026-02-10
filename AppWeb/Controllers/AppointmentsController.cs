@@ -49,7 +49,24 @@ public class AppointmentsController : Controller
         return RedirectToAction(nameof(Index), new { branchId = appointment.BranchId });
     }
 
+    public async Task<IActionResult> Edit(int id)
+    {
+        var appt = await _apiService.GetAppointmentAsync(id);
+        if (appt == null) return NotFound();
+        var branches = await _apiService.GetBranchesAsync();
+        var projects = await _apiService.GetProjectsAsync(appt.BranchId);
+        ViewBag.Branches = new SelectList(branches, "Id", "Name", appt.BranchId);
+        ViewBag.Projects = new SelectList(projects, "Id", "Name", appt.ProjectId);
+        return View(appt);
+    }
+
     [HttpPost]
+    public async Task<IActionResult> Edit(int id, Appointment appointment)
+    {
+        await _apiService.UpdateAppointmentAsync(id, appointment);
+        return RedirectToAction(nameof(Index), new { branchId = appointment.BranchId });
+    }
+
     public async Task<IActionResult> Delete(int id)
     {
         var appt = await _apiService.GetAppointmentAsync(id);

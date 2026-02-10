@@ -32,11 +32,16 @@
                     <div class="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                         <span class="material-symbols-outlined">person</span>
                     </div>
-                    <button class="text-gray-300 hover:text-primary transition-colors">
-                        <span class="material-symbols-outlined">more_horiz</span>
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="location.href='/Clients/Edit/@item.Id'" class="text-gray-300 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button onclick="if(confirm('Eliminare?')) location.href='/Clients/Delete/@item.Id'" class="text-gray-300 hover:text-red-500 transition-colors">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
                 </div>
-                <h3 class="text-lg font-bold mb-2 group-hover:text-primary transition-colors">@item.Name</h3>
+                <h3 class="text-lg font-bold mb-2 group-hover:text-primary transition-colors cursor-pointer" onclick="location.href='/Clients/Details/@item.Id'">@item.Name</h3>
                 <div class="space-y-2 mt-4 pt-4 border-t border-gray-50 dark:border-gray-800">
                     <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
                         <span class="material-symbols-outlined text-lg">mail</span>

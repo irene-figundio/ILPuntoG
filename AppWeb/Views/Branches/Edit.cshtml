@@ -1,41 +1,51 @@
 @model Models.Branch
 
 @{
-    ViewData["Title"] = "Modifica Sede";
+    ViewData["Title"] = "Modifica Sede: " + Model.Name;
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-action="Index">Sedi</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Modifica Sede</li>
-            </ol>
-        </nav>
+<div class="p-4 lg:p-8 max-w-2xl mx-auto">
+    <div class="flex items-center gap-2 text-gray-500 mb-6 text-sm">
+        <a href="/Branches" class="hover:text-primary transition-colors">Sedi</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="/Branches/Details/@Model.Id" class="hover:text-primary transition-colors">@Model.Name</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-bold text-gray-900 dark:text-white">Modifica</span>
+    </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-warning text-dark py-3">
-                <h4 class="mb-0"><span class="material-symbols-outlined me-2">edit</span>Modifica Sede</h4>
+    <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="bg-primary p-6 text-white flex items-center gap-4">
+            <div class="size-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">edit_location</span>
             </div>
-            <div class="card-body p-4">
-                <form asp-action="Edit">
-                    <input type="hidden" asp-for="Id" />
-                    <div class="mb-3">
-                        <label asp-for="Name" class="form-label fw-bold">Nome Sede</label>
-                        <input asp-for="Name" class="form-control form-control-lg" />
-                        <span asp-validation-for="Name" class="text-danger small"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Address" class="form-label fw-bold">Indirizzo</label>
-                        <textarea asp-for="Address" class="form-control" rows="3"></textarea>
-                        <span asp-validation-for="Address" class="text-danger small"></span>
-                    </div>
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a asp-action="Index" class="btn btn-light px-4">Annulla</a>
-                        <button type="submit" class="btn btn-warning px-5 fw-bold">Aggiorna</button>
-                    </div>
-                </form>
+            <div>
+                <h2 class="text-xl font-black">Modifica Sede</h2>
+                <p class="text-white/80 text-xs">Aggiorna le informazioni della sede.</p>
             </div>
+        </div>
+
+        <div class="p-8">
+            <form asp-action="Edit" class="space-y-6">
+                <input type="hidden" asp-for="Id" />
+                <div>
+                    <label asp-for="Name" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Nome Sede</label>
+                    <input asp-for="Name" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" required />
+                    <span asp-validation-for="Name" class="text-red-500 text-[10px] font-bold mt-1 ml-1"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Address" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Indirizzo</label>
+                    <textarea asp-for="Address" rows="3" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all"></textarea>
+                    <span asp-validation-for="Address" class="text-red-500 text-[10px] font-bold mt-1 ml-1"></span>
+                </div>
+
+                <div class="pt-4 flex items-center justify-end gap-3">
+                    <a href="/Branches/Details/@Model.Id" class="px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">Annulla</a>
+                    <button type="submit" class="bg-primary hover:bg-primary/90 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all">
+                        Salva Modifiche
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
