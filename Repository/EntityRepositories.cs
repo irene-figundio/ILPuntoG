@@ -122,9 +122,22 @@ public class UserRepository : GenericRepository<User>, IUserRepository
 {
     public UserRepository(ApplicationDbContext context) : base(context) { }
 
+    public override async Task<IEnumerable<User>> GetAllAsync()
+    {
+        return await _dbSet
+            .Include(u => u.Role)
+            .Include(u => u.UserBranches)
+                .ThenInclude(ub => ub.Branch)
+            .ToListAsync();
+    }
+
     public async Task<User?> GetByUsernameAsync(string username)
     {
-        return await _dbSet.Include(u => u.Role).FirstOrDefaultAsync(u => u.Username == username);
+        return await _dbSet
+            .Include(u => u.Role)
+            .Include(u => u.UserBranches)
+                .ThenInclude(ub => ub.Branch)
+            .FirstOrDefaultAsync(u => u.Username == username);
     }
 }
 

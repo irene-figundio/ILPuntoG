@@ -36,13 +36,17 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #dbe0e6; border-radius: 10px; }
+
+        /* Mobile menu styles */
+        #mobile-sidebar.hidden { display: none; }
+        #mobile-sidebar-overlay.hidden { display: none; }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white antialiased">
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar Navigation -->
-        <aside class="w-64 flex-shrink-0 border-r border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex flex-col justify-between py-6">
+    <div class="flex h-screen overflow-hidden relative">
+        <!-- Sidebar Navigation (Desktop) -->
+        <aside class="hidden lg:flex w-64 flex-shrink-0 border-r border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex-col justify-between py-6">
             <div class="flex flex-col gap-8 px-4">
                 <div class="flex items-center gap-3 px-2">
                     <div class="bg-primary p-2 rounded-lg text-white">
@@ -51,89 +55,79 @@
                     <h1 class="text-lg font-extrabold tracking-tight">Il Punto G</h1>
                 </div>
                 <nav class="flex flex-col gap-2">
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/">
-                        <span class="material-symbols-outlined">dashboard</span>
-                        <span class="text-sm">Dashboard</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Projects" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Projects">
-                        <span class="material-symbols-outlined">folder</span>
-                        <span class="text-sm font-medium">Progetti</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Calendar" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Calendar">
-                        <span class="material-symbols-outlined">calendar_today</span>
-                        <span class="text-sm font-medium">Calendario</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "TodoTasks" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/TodoTasks">
-                        <span class="material-symbols-outlined">checklist</span>
-                        <span class="text-sm font-medium">Attività</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Appointments" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Appointments">
-                        <span class="material-symbols-outlined">event</span>
-                        <span class="text-sm font-medium">Appuntamenti</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Clients" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Clients">
-                        <span class="material-symbols-outlined">groups</span>
-                        <span class="text-sm font-medium">Clienti</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Branches" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Branches">
-                        <span class="material-symbols-outlined">location_on</span>
-                        <span class="text-sm font-medium">Sedi</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkLogs" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/WorkLogs">
-                        <span class="material-symbols-outlined">schedule</span>
-                        <span class="text-sm font-medium">Presenze</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Staff" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Staff">
-                        <span class="material-symbols-outlined">badge</span>
-                        <span class="text-sm font-medium">Staff</span>
-                    </a>
+                    <partial name="_NavLinks" />
                 </nav>
             </div>
             <div class="px-4 flex flex-col gap-4">
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <div class="flex items-center gap-3 p-2 border-t border-[#dbe0e6] dark:border-gray-800 pt-6">
-                        <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
-                            @(User.Identity.Name?.Substring(0, Math.Min(2, User.Identity.Name.Length)).ToUpper() ?? "U")
+                <partial name="_UserProfileSide" />
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobile-sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
+
+        <!-- Mobile Sidebar -->
+        <aside id="mobile-sidebar" class="hidden fixed inset-y-0 left-0 w-64 bg-white dark:bg-background-dark z-50 flex-col py-6 shadow-xl lg:hidden">
+            <div class="flex flex-col gap-8 px-4">
+                <div class="flex items-center justify-between px-2">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-primary p-2 rounded-lg text-white">
+                            <span class="material-symbols-outlined block">hub</span>
                         </div>
-                        <div class="flex flex-col">
-                            <p class="text-sm font-bold leading-none mb-1">@User.Identity.Name</p>
-                            <p class="text-xs text-[#617589]">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</p>
-                        </div>
-                        <a href="/Account/Logout" class="ms-auto text-gray-400 hover:text-red-500" title="Logout">
-                            <span class="material-symbols-outlined text-lg">logout</span>
-                        </a>
+                        <h1 class="text-lg font-extrabold tracking-tight">Il Punto G</h1>
                     </div>
-                }
+                    <button id="close-mobile-menu" class="p-2 text-gray-500 hover:text-primary">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <partial name="_NavLinks" />
+                </nav>
+            </div>
+            <div class="px-4 mt-auto">
+                <partial name="_UserProfileSide" />
             </div>
         </aside>
 
         <!-- Main Content Area -->
-        <main class="flex-1 flex flex-col overflow-hidden">
+        <main class="flex-1 flex flex-col overflow-hidden w-full">
             <!-- Top Navbar -->
-            <header class="h-16 border-b border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex items-center justify-between px-8 z-10">
-                <div class="flex items-center gap-6">
+            <header class="h-16 border-b border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex items-center justify-between px-4 lg:px-8 z-10 flex-shrink-0">
+                <div class="flex items-center gap-4 lg:gap-6">
+                    <!-- Mobile Menu Toggle -->
+                    <button id="open-mobile-menu" class="lg:hidden p-2 text-gray-500 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+
                     <!-- Branch Switcher -->
-                    <div class="relative group">
+                    <div class="relative group hidden sm:block">
                         <button class="flex items-center gap-2 px-3 py-1.5 border border-[#dbe0e6] dark:border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                             <span class="material-symbols-outlined text-primary text-lg">domain</span>
-                            <span>@(ViewBag.CurrentBranchName ?? "Tutte le Sedi")</span>
+                            <span class="max-w-[100px] truncate">@(ViewBag.CurrentBranchName ?? "Tutte le Sedi")</span>
                             <span class="material-symbols-outlined text-gray-400">expand_more</span>
                         </button>
                     </div>
-                    <div class="h-6 w-[1px] bg-gray-200 dark:bg-gray-700"></div>
-                    <div class="flex items-center bg-[#f0f2f4] dark:bg-gray-800 rounded-lg px-3 py-1.5 w-64">
+
+                    <div class="h-6 w-[1px] bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
+
+                    <!-- Search -->
+                    <div class="flex items-center bg-[#f0f2f4] dark:bg-gray-800 rounded-lg px-3 py-1.5 w-40 sm:w-64">
                         <span class="material-symbols-outlined text-[#617589] text-xl">search</span>
-                        <input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-[#617589]" placeholder="Cerca..." type="text" />
+                        <input id="global-search" class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-[#617589]" placeholder="Cerca..." type="text" />
                     </div>
                 </div>
-                <div class="flex items-center gap-4">
+
+                <div class="flex items-center gap-2 lg:gap-4">
                     <button class="p-2 text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative">
                         <span class="material-symbols-outlined">notifications</span>
                     </button>
                     <button class="p-2 text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg" onclick="location.href='/Profile'">
                         <span class="material-symbols-outlined">settings</span>
                     </button>
+                    <!-- Small screen avatar -->
+                    <div class="lg:hidden size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                         @(User.Identity?.Name?.Substring(0, Math.Min(1, User.Identity.Name.Length)).ToUpper() ?? "U")
+                    </div>
                 </div>
             </header>
 
@@ -143,8 +137,41 @@
             </div>
         </main>
     </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function() {
+            const $mobileSidebar = $('#mobile-sidebar');
+            const $overlay = $('#mobile-sidebar-overlay');
+
+            $('#open-mobile-menu').on('click', function() {
+                $mobileSidebar.removeClass('hidden').addClass('flex');
+                $overlay.removeClass('hidden');
+            });
+
+            $('#close-mobile-menu, #mobile-sidebar-overlay').on('click', function() {
+                $mobileSidebar.addClass('hidden').removeClass('flex');
+                $overlay.addClass('hidden');
+            });
+
+            // Global search integration
+            $('#global-search').on('keyup', function() {
+                const value = $(this).val().toLowerCase();
+                // Try to find a local search input and sync it
+                const localSearch = $('input[id$="Search"]');
+                if (localSearch.length) {
+                    localSearch.val(value).trigger('keyup');
+                } else {
+                    // Fallback: search for cards or rows
+                    $('.project-card, .staff-card, .appt-card, .client-card, .kanban-card, tr').each(function() {
+                        const text = $(this).text().toLowerCase();
+                        $(this).toggle(text.indexOf(value) > -1);
+                    });
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -16,10 +16,18 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <!-- Search -->
+    <div class="bg-white dark:bg-[#1a202c] p-4 rounded-xl border border-gray-200 dark:border-gray-800 mb-8">
+        <div class="relative max-w-md">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <input id="clientSearch" class="w-full pl-10 pr-4 py-2 bg-[#f0f2f4] dark:bg-[#2d3748] border-none rounded-lg text-sm focus:ring-2 focus:ring-primary" placeholder="Cerca clienti..." type="text" />
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="clientGrid">
         @foreach (var item in Model)
         {
-            <div class="bg-white dark:bg-[#1a202c] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group">
+            <div class="client-card bg-white dark:bg-[#1a202c] p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all group" data-info="@item.Name.ToLower() @item.Email.ToLower()">
                 <div class="flex justify-between items-start mb-4">
                     <div class="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                         <span class="material-symbols-outlined">person</span>
@@ -51,3 +59,16 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $("#clientSearch").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#clientGrid .client-card").filter(function() {
+                    $(this).toggle($(this).data("info").indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+}

@@ -24,11 +24,9 @@ public class StaffController : Controller
         ViewBag.Branches = new SelectList(branches, "Id", "Name", branchId);
         ViewBag.BranchId = branchId;
 
-        // In a real scenario, filtering would be done in API
         if (branchId.HasValue)
         {
-            // Simplified filtering for demo purposes if API doesn't support it directly
-            // users = users.Where(u => u.UserBranches.Any(ub => ub.BranchId == branchId.Value)).ToList();
+            users = users.Where(u => u.UserBranches.Any(ub => ub.BranchId == branchId.Value)).ToList();
         }
 
         return View(users);
