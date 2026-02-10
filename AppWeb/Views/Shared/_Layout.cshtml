@@ -1,49 +1,149 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="light" lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - AppWeb</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/AppWeb.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - Il Punto G</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b8cee",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #dbe0e6; border-radius: 10px; }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">AppWeb</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white antialiased">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 flex-shrink-0 border-r border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex flex-col justify-between py-6">
+            <div class="flex flex-col gap-8 px-4">
+                <div class="flex items-center gap-3 px-2">
+                    <div class="bg-primary p-2 rounded-lg text-white">
+                        <span class="material-symbols-outlined block">hub</span>
+                    </div>
+                    <h1 class="text-lg font-extrabold tracking-tight">Il Punto G</h1>
                 </div>
+                <nav class="flex flex-col gap-2">
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <span class="text-sm">Dashboard</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Projects" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Projects">
+                        <span class="material-symbols-outlined">folder</span>
+                        <span class="text-sm font-medium">Progetti</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Calendar" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Calendar">
+                        <span class="material-symbols-outlined">calendar_today</span>
+                        <span class="text-sm font-medium">Calendario</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "TodoTasks" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/TodoTasks">
+                        <span class="material-symbols-outlined">checklist</span>
+                        <span class="text-sm font-medium">Attività</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Appointments" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Appointments">
+                        <span class="material-symbols-outlined">event</span>
+                        <span class="text-sm font-medium">Appuntamenti</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Clients" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Clients">
+                        <span class="material-symbols-outlined">groups</span>
+                        <span class="text-sm font-medium">Clienti</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Branches" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Branches">
+                        <span class="material-symbols-outlined">location_on</span>
+                        <span class="text-sm font-medium">Sedi</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkLogs" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/WorkLogs">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <span class="text-sm font-medium">Presenze</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Staff" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Staff">
+                        <span class="material-symbols-outlined">badge</span>
+                        <span class="text-sm font-medium">Staff</span>
+                    </a>
+                </nav>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
+            <div class="px-4 flex flex-col gap-4">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="flex items-center gap-3 p-2 border-t border-[#dbe0e6] dark:border-gray-800 pt-6">
+                        <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                            @(User.Identity.Name?.Substring(0, Math.Min(2, User.Identity.Name.Length)).ToUpper() ?? "U")
+                        </div>
+                        <div class="flex flex-col">
+                            <p class="text-sm font-bold leading-none mb-1">@User.Identity.Name</p>
+                            <p class="text-xs text-[#617589]">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</p>
+                        </div>
+                        <a href="/Account/Logout" class="ms-auto text-gray-400 hover:text-red-500" title="Logout">
+                            <span class="material-symbols-outlined text-lg">logout</span>
+                        </a>
+                    </div>
+                }
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Navbar -->
+            <header class="h-16 border-b border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex items-center justify-between px-8 z-10">
+                <div class="flex items-center gap-6">
+                    <!-- Branch Switcher -->
+                    <div class="relative group">
+                        <button class="flex items-center gap-2 px-3 py-1.5 border border-[#dbe0e6] dark:border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <span class="material-symbols-outlined text-primary text-lg">domain</span>
+                            <span>@(ViewBag.CurrentBranchName ?? "Tutte le Sedi")</span>
+                            <span class="material-symbols-outlined text-gray-400">expand_more</span>
+                        </button>
+                    </div>
+                    <div class="h-6 w-[1px] bg-gray-200 dark:bg-gray-700"></div>
+                    <div class="flex items-center bg-[#f0f2f4] dark:bg-gray-800 rounded-lg px-3 py-1.5 w-64">
+                        <span class="material-symbols-outlined text-[#617589] text-xl">search</span>
+                        <input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-[#617589]" placeholder="Cerca..." type="text" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button class="p-2 text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <button class="p-2 text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg" onclick="location.href='/Profile'">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                @RenderBody()
+            </div>
         </main>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - AppWeb - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

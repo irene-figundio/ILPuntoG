@@ -1,0 +1,223 @@
+@{
+    ViewData["Title"] = "Pianificatore Multi-Sede";
+    var now = DateTime.Now;
+}
+
+<main class="flex flex-1 overflow-hidden h-full">
+    <!-- Content Area -->
+    <div class="flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+        <!-- PageHeading -->
+        <div class="flex flex-wrap items-center justify-between gap-3 p-8 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div class="flex flex-col gap-1">
+                <p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-tight">@now.ToString("MMMM yyyy")</p>
+                <p class="text-[#617589] text-sm font-medium">Gestisci appuntamenti in tutte le sedi</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Segmented View Buttons (FullCalendar controls them) -->
+                <div class="flex h-10 w-64 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-1" id="calendarViews">
+                    <button class="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider transition-all hover:bg-white dark:hover:bg-gray-700 active-view" data-view="dayGridMonth">Mese</button>
+                    <button class="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider transition-all hover:bg-white dark:hover:bg-gray-700" data-view="timeGridWeek">Settimana</button>
+                    <button class="flex cursor-pointer h-full grow items-center justify-center rounded-lg px-2 text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider transition-all hover:bg-white dark:hover:bg-gray-700" data-view="timeGridDay">Giorno</button>
+                </div>
+                <button onclick="location.href='/Appointments/Create'" class="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold shadow-md shadow-primary/20 hover:bg-primary/90">
+                    <span class="truncate">Nuovo Appuntamento</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Calendar Content -->
+        <div class="p-8">
+            <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm p-4">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar: Branch Schedules -->
+    <aside class="w-80 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex flex-col shrink-0">
+        <div class="p-6 border-b border-gray-100 dark:border-gray-800">
+            <h3 class="text-[#111418] dark:text-white text-lg font-bold mb-4">Filtra Sedi</h3>
+
+            <form id="calendarFilters" class="flex flex-col gap-4">
+                <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg mb-2">
+                    <span class="material-symbols-outlined text-gray-400 text-lg">search</span>
+                    <input class="bg-transparent border-none p-0 text-sm focus:ring-0 w-full placeholder:text-gray-400" placeholder="Cerca sede..." type="text" />
+                </div>
+
+                @foreach (var b in ViewBag.Branches)
+                {
+                    <label class="flex items-center justify-between group cursor-pointer">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 rounded-full bg-primary"></div>
+                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">@b.Name</span>
+                        </div>
+                        <input type="checkbox" name="branchIds" value="@b.Id" checked class="rounded text-primary focus:ring-primary h-4 w-4" onchange="applyFilters()" />
+                    </label>
+                }
+
+                <hr class="my-2 border-gray-100 dark:border-gray-800" />
+
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Filtri Extra</h4>
+                <select name="projectId" class="form-select text-xs rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800" onchange="applyFilters()">
+                    <option value="">Tutti i Progetti</option>
+                    @foreach (var p in ViewBag.Projects) { <option value="@p.Id">@p.Name</option> }
+                </select>
+                <select name="userId" class="form-select text-xs rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800" onchange="applyFilters()">
+                    <option value="">Tutti gli Utenti</option>
+                    @foreach (var u in ViewBag.Users) { <option value="@u.Id">@u.Name</option> }
+                </select>
+            </form>
+        </div>
+
+        <div class="p-6">
+            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Statistiche Veloci</h4>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                    <p class="text-2xl font-black text-gray-800 dark:text-white" id="statToday">--</p>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase">Oggi</p>
+                </div>
+                <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                    <p class="text-2xl font-black text-gray-800 dark:text-white" id="statWeek">--</p>
+                    <p class="text-[10px] font-bold text-gray-500 uppercase">Settimana</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-auto p-6 border-t border-gray-100 dark:border-gray-800">
+            <div id="google-integration-area">
+                <!-- Google Sync buttons -->
+            </div>
+        </div>
+    </aside>
+</main>
+
+@section Styles {
+    <style>
+        .fc { font-family: inherit; }
+        .fc-toolbar-title { font-weight: 800 !important; font-size: 1.25rem !important; }
+        .fc-button-primary { background-color: #f3f4f6 !important; border: none !important; color: #374151 !important; font-weight: 700 !important; text-transform: uppercase !important; font-size: 0.75rem !important; }
+        .fc-button-active { background-color: white !important; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; color: #2b8cee !important; }
+        .fc-daygrid-day-number { font-weight: 700; padding: 8px !important; }
+        .fc-col-header-cell-cushion { text-transform: uppercase; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; color: #6b7280; padding: 12px !important; }
+        .active-view { background-color: white !important; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); color: #2b8cee !important; }
+        .dark .active-view { background-color: #374151 !important; }
+        #calendar { min-height: 600px; }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: false, // We use our own header
+                locale: 'it',
+                editable: true,
+                droppable: true,
+                height: 'auto',
+                events: function(info, successCallback, failureCallback) {
+                    const formData = new FormData(document.getElementById('calendarFilters'));
+                    const params = new URLSearchParams(formData).toString();
+                    fetch('/Calendar/GetEvents?' + params)
+                        .then(r => r.json())
+                        .then(data => {
+                            successCallback(data);
+                            updateQuickStats(data);
+                        })
+                        .catch(err => failureCallback(err));
+                },
+                eventClick: function(info) {
+                    const props = info.event.extendedProps;
+                    if (props.type === 'task') {
+                         window.location.href = '/TodoTasks/Edit/' + props.dbId;
+                    } else if (props.type === 'appointment') {
+                         if(confirm('Eliminare appuntamento: ' + info.event.title + '?')) {
+                             deleteAppointment(props.dbId);
+                         }
+                    }
+                },
+                eventDrop: function(info) {
+                    updateEvent(info.event, info.event.start);
+                }
+            });
+            calendar.render();
+
+            // Custom View Switcher
+            document.querySelectorAll('#calendarViews button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#calendarViews button').forEach(b => b.classList.remove('active-view'));
+                    this.classList.add('active-view');
+                    calendar.changeView(this.dataset.view);
+                });
+            });
+
+            function updateEvent(event, newDate) {
+                var data = {
+                    type: event.extendedProps.type,
+                    dbId: event.extendedProps.dbId,
+                    newDate: newDate.toISOString()
+                };
+                fetch('/Calendar/UpdateEvent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(data)
+                }).then(r => calendar.refetchEvents());
+            }
+
+            function deleteAppointment(id) {
+                const data = new URLSearchParams();
+                data.append('id', id);
+                fetch('/Appointments/Delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                }).then(() => calendar.refetchEvents());
+            }
+
+            function updateQuickStats(events) {
+                const today = new Date().toISOString().split('T')[0];
+                const countToday = events.filter(e => e.start.split('T')[0] === today).length;
+                document.getElementById('statToday').innerText = countToday;
+                document.getElementById('statWeek').innerText = events.length; // Simplified
+            }
+
+            window.applyFilters = function() {
+                calendar.refetchEvents();
+            };
+
+            // Google Integration
+            function refreshGoogleUI() {
+                fetch('/Calendar/GetGoogleStatus')
+                    .then(r => r.json())
+                    .then(data => {
+                        const area = document.getElementById('google-integration-area');
+                        if (data.isConnected || data.IsConnected) {
+                            area.innerHTML = `
+                                <div class="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                    <p class="text-xs font-bold text-primary mb-1">Google Calendar</p>
+                                    <p class="text-[11px] text-gray-600 dark:text-gray-400 mb-3">Sincronizzazione attiva.</p>
+                                    <button onclick="syncGoogle()" class="w-full py-2 bg-primary text-white text-[11px] font-bold rounded-lg shadow-sm hover:bg-primary/90 transition-colors">Sincronizza Ora</button>
+                                </div>
+                            `;
+                        } else {
+                            area.innerHTML = `
+                                <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                                    <p class="text-xs font-bold text-gray-500 mb-1">Google Calendar</p>
+                                    <button onclick="connectGoogle()" class="w-full py-2 bg-white border border-gray-200 text-[11px] font-bold rounded-lg hover:bg-gray-50 transition-colors">Collega Account</button>
+                                </div>
+                            `;
+                        }
+                    });
+            }
+            window.syncGoogle = function() {
+                fetch('/Calendar/SyncGoogle', { method: 'POST' }).then(() => calendar.refetchEvents());
+            };
+            window.connectGoogle = function() {
+                fetch('/Calendar/ConnectGoogle', { method: 'POST' }).then(() => refreshGoogleUI());
+            };
+            refreshGoogleUI();
+        });
+    </script>
+}

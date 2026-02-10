@@ -1,0 +1,113 @@
+@model IEnumerable<Models.WorkLog>
+@using Models
+@{
+    ViewData["Title"] = "Time Tracking Overview";
+}
+
+<div class="p-6">
+    <div class="flex flex-wrap justify-between items-start gap-6 mb-8">
+        <div class="flex flex-col gap-1">
+            <h1 class="text-3xl font-black tracking-tight">Time Tracking Overview</h1>
+            <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mt-1">
+                <span class="material-symbols-outlined text-base">location_on</span>
+                <span>Visualizzazione ore per <span class="font-bold text-gray-900 dark:text-white">Tutte le Sedi</span></span>
+            </div>
+        </div>
+        <div class="flex gap-4">
+            <div class="bg-white dark:bg-[#1a202c] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col min-w-[160px]">
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Ore Totali Sede</span>
+                <span class="text-2xl font-black text-primary mt-1">@Model.Sum(x => x.Hours)</span>
+                <span class="text-[10px] text-green-500 font-bold mt-1">↑ 12% rispetto a settimana scorsa</span>
+            </div>
+            <div class="bg-primary text-white p-4 rounded-xl shadow-md flex flex-col min-w-[160px]">
+                <span class="text-[10px] font-bold text-white/70 uppercase">Importo Fatturabile</span>
+                <span class="text-2xl font-black mt-1">€ @(Model.Sum(x => x.Hours) * 50)</span>
+                <span class="text-[10px] text-white/80 font-bold mt-1">Periodo Corrente</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a202c] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-100 dark:border-gray-700">
+                <span class="material-symbols-outlined text-gray-400 text-lg">calendar_month</span>
+                <select class="bg-transparent border-none text-sm font-bold focus:ring-0 p-0 pr-8 cursor-pointer">
+                    <option>Questa Settimana</option>
+                    <option>Settimana Scorsa</option>
+                    <option>Questo Mese</option>
+                </select>
+            </div>
+            <button class="flex items-center gap-2 px-4 py-2 text-gray-500 hover:text-primary transition-colors text-sm font-bold">
+                <span class="material-symbols-outlined text-lg">filter_alt</span>
+                Filtri
+            </button>
+        </div>
+        <div class="flex items-center gap-2">
+            <button class="p-2 text-gray-400 hover:text-primary"><span class="material-symbols-outlined">download</span></button>
+            <button class="p-2 text-gray-400 hover:text-primary"><span class="material-symbols-outlined">print</span></button>
+            <button onclick="location.href='/WorkLogs/Create'" class="ml-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm hover:bg-primary/90 transition-all">
+                <span class="material-symbols-outlined text-lg">add</span> Inserisci Ore
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a202c] rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                        <th class="p-4 w-16"></th>
+                        <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Dipendente</th>
+                        <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Data</th>
+                        <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ore</th>
+                        <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Tipo</th>
+                        <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Stato</th>
+                        <th class="p-4 w-12"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach (var item in Model.OrderByDescending(x => x.Date))
+                    {
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors group">
+                            <td class="p-4 text-center">
+                                <button class="size-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-400 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-all">
+                                    <span class="material-symbols-outlined text-lg">play_arrow</span>
+                                </button>
+                            </td>
+                            <td class="p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                        @(item.User?.Name?.Substring(0,1).ToUpper() ?? "U")
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold">@(item.User?.Name ?? "Utente")</span>
+                                        <span class="text-[10px] text-gray-400">@item.User?.Email</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 text-sm text-gray-500">@item.Date.ToString("dd MMM yyyy")</td>
+                            <td class="p-4 text-sm font-bold">@item.Hours.ToString("F1") h</td>
+                            <td class="p-4">
+                                <span class="text-sm font-semibold">@item.Type.ToString()</span>
+                            </td>
+                            <td class="p-4">
+                                <span class="px-2 py-1 rounded bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold uppercase">Approvato</span>
+                            </td>
+                            <td class="p-4 text-right">
+                                <button class="text-gray-400 hover:text-primary"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="flex items-center justify-between p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/20">
+            <span class="text-xs text-gray-500">Mostrati @Model.Count() risultati</span>
+            <div class="flex gap-1">
+                <button class="px-3 py-1 text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50">Precedente</button>
+                <button class="px-3 py-1 text-xs font-bold bg-primary text-white rounded">1</button>
+                <button class="px-3 py-1 text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50">Successivo</button>
+            </div>
+        </div>
+    </div>
+</div>

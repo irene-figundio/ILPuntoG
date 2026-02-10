@@ -1,0 +1,44 @@
+@model Models.Project
+
+@{
+    ViewData["Title"] = "Modifica Progetto";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Progetti</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Modifica</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-warning text-dark py-3">
+                <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Modifica Progetto</h4>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Edit">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fw-bold">Nome Progetto</label>
+                        <input asp-for="Name" class="form-control form-control-lg" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="BranchId" class="form-label fw-bold">Sede</label>
+                        <select asp-for="BranchId" class="form-select shadow-sm" asp-items="ViewBag.Branches"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label fw-bold">Stato</label>
+                        <select asp-for="Status" class="form-select shadow-sm" asp-items="Html.GetEnumSelectList<Models.ProjectStatus>()"></select>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a asp-action="Index" class="btn btn-light px-4">Annulla</a>
+                        <button type="submit" class="btn btn-warning px-5 fw-bold text-dark">Aggiorna</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

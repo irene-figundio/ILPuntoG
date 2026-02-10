@@ -1,0 +1,167 @@
+@model IEnumerable<Models.TodoTask>
+@using Models
+@{
+    ViewData["Title"] = "Gestione Attività";
+    var projectId = ViewBag.ProjectId as int?;
+}
+
+<div class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark overflow-y-auto">
+    <!-- Page Heading & Filters -->
+    <div class="p-6 pb-0">
+        <div class="flex flex-wrap justify-between items-end gap-4 mb-6">
+            <div class="flex flex-col gap-1">
+                <h1 class="text-3xl font-black tracking-tight">Gestione Attività</h1>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">Organizza e monitora i tuoi task e quelli del team.</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="location.href='/TodoTasks/Create?projectId=@projectId'" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold shadow-md hover:bg-primary/90 transition-all">
+                    <span class="material-symbols-outlined text-lg">add</span> Nuova Attività
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700 gap-8 mb-4">
+            <a class="flex items-center gap-2 border-b-2 border-primary text-primary pb-3 px-1 transition-all" href="#">
+                <span class="material-symbols-outlined text-lg">view_kanban</span>
+                <p class="text-sm font-bold">Kanban Board</p>
+            </a>
+            <a class="flex items-center gap-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 pb-3 px-1 transition-all" href="#">
+                <span class="material-symbols-outlined text-lg">list</span>
+                <p class="text-sm font-semibold">Lista</p>
+            </a>
+        </div>
+
+        <!-- Chips / Filters -->
+        <div class="flex gap-3 flex-wrap mb-6">
+            <form method="get" asp-action="Index" class="flex gap-3">
+                <div class="flex h-9 items-center gap-2 rounded-lg bg-[#f0f2f4] dark:bg-[#2d3748] px-4">
+                    <span class="material-symbols-outlined text-lg text-gray-400">folder</span>
+                    <select name="projectId" class="bg-transparent border-none text-sm font-medium focus:ring-0 p-0 pr-8 cursor-pointer" onchange="this.form.submit()">
+                        <option value="">Tutti i Progetti</option>
+                        @foreach (var p in (SelectList)ViewBag.Projects)
+                        {
+                            @if (projectId?.ToString() == p.Value)
+                            {
+                                <option value="@p.Value" selected>@p.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@p.Value">@p.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="flex-1 p-6 pt-0 overflow-x-auto">
+        <div class="flex gap-6 h-full min-h-[500px]">
+            <!-- To Do Column -->
+            <div class="kanban-column flex flex-col gap-4 w-80 shrink-0">
+                <div class="flex items-center justify-between px-2 py-1">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Da Fare</h3>
+                        <span class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs px-2 py-0.5 rounded-full font-bold">@Model.Count(t => t.Status == TodoStatus.Pending)</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3" id="pending-tasks">
+                    @foreach (var t in Model.Where(t => t.Status == TodoStatus.Pending))
+                    {
+                        <partial name="_KanbanCard" model="t" />
+                    }
+                </div>
+            </div>
+
+            <!-- In Progress Column -->
+            <div class="kanban-column flex flex-col gap-4 w-80 shrink-0">
+                <div class="flex items-center justify-between px-2 py-1">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">In Corso</h3>
+                        <span class="bg-primary/20 text-primary text-xs px-2 py-0.5 rounded-full font-bold">@Model.Count(t => t.Status == TodoStatus.InProgress)</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3" id="inprogress-tasks">
+                    @foreach (var t in Model.Where(t => t.Status == TodoStatus.InProgress))
+                    {
+                        <partial name="_KanbanCard" model="t" />
+                    }
+                </div>
+            </div>
+
+            <!-- Completed Column -->
+            <div class="kanban-column flex flex-col gap-4 w-80 shrink-0">
+                <div class="flex items-center justify-between px-2 py-1">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest">Completato</h3>
+                        <span class="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-xs px-2 py-0.5 rounded-full font-bold">@Model.Count(t => t.Status == TodoStatus.Completed)</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-3" id="completed-tasks">
+                    @foreach (var t in Model.Where(t => t.Status == TodoStatus.Completed))
+                    {
+                        <div class="opacity-75 hover:opacity-100 transition-opacity">
+                            <partial name="_KanbanCard" model="t" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const columns = ['pending-tasks', 'inprogress-tasks', 'completed-tasks'];
+            const statusMap = {
+                'pending-tasks': 0,    // Pending
+                'inprogress-tasks': 1, // InProgress
+                'completed-tasks': 2   // Completed
+            };
+
+            columns.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    Sortable.create(el, {
+                        group: 'kanban',
+                        animation: 150,
+                        ghostClass: 'bg-primary/5',
+                        onStart: function() { window.isDragging = true; },
+                        onEnd: function (evt) {
+                            setTimeout(() => { window.isDragging = false; }, 100);
+                            const taskId = evt.item.getAttribute('data-task-id');
+                            const newStatus = statusMap[evt.to.id];
+
+                            if (taskId && newStatus !== undefined) {
+                                updateTaskStatus(taskId, newStatus);
+                            }
+                        }
+                    });
+                }
+            });
+
+            function updateTaskStatus(taskId, status) {
+                const data = new URLSearchParams();
+                data.append('type', 'task');
+                data.append('dbId', taskId);
+                data.append('newDate', new Date().toISOString());
+                data.append('status', status);
+
+                fetch('/Calendar/UpdateEvent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                }).then(response => {
+                    if (!response.ok) {
+                        alert('Errore durante l\'aggiornamento dello stato');
+                        location.reload();
+                    }
+                });
+            }
+        });
+    </script>
+}

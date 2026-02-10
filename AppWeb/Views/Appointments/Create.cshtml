@@ -1,0 +1,68 @@
+@model Models.Appointment
+
+@{
+    ViewData["Title"] = "Nuovo Appuntamento";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Appuntamenti</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Nuovo</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h4 class="mb-0"><i class="fas fa-calendar-plus me-2"></i>Nuovo Appuntamento</h4>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create">
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-bold">Descrizione</label>
+                        <input asp-for="Description" class="form-control" placeholder="Es. Incontro preliminare" />
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="StartTime" class="form-label fw-bold">Data e Ora Inizio</label>
+                            <input asp-for="StartTime" class="form-control" type="datetime-local" />
+                            <span asp-validation-for="StartTime" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Duration" class="form-label fw-bold">Durata</label>
+                            <input asp-for="Duration" class="form-control" type="time" />
+                            <span asp-validation-for="Duration" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="BranchId" class="form-label fw-bold">Sede</label>
+                            <select asp-for="BranchId" class="form-select" asp-items="ViewBag.Branches">
+                                <option value="">Seleziona sede...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ProjectId" class="form-label fw-bold">Progetto (Opzionale)</label>
+                            <select asp-for="ProjectId" class="form-select" asp-items="ViewBag.Projects">
+                                <option value="">Nessun progetto</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a asp-action="Index" class="btn btn-light px-4">Annulla</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">Salva Appuntamento</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

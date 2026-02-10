@@ -1,0 +1,94 @@
+@model Models.TodoTask
+@{
+    ViewData["Title"] = "Nuovo Task";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Crea Nuovo Task</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Titolo</label>
+                            <input asp-for="Title" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Descrizione</label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="ProjectId" class="form-label">Progetto</label>
+                            <select asp-for="ProjectId" class="form-select" asp-items="ViewBag.Projects"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="ClientId" class="form-label">Cliente (Opzionale)</label>
+                            <select asp-for="ClientId" class="form-select" asp-items="ViewBag.Clients">
+                                <option value="">-- Nessuno --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label asp-for="Deadline" class="form-label">Scadenza</label>
+                            <input asp-for="Deadline" type="date" class="form-control" value="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label asp-for="PriorityId" class="form-label">Priorità</label>
+                                    <select asp-for="PriorityId" class="form-select" asp-items="ViewBag.Priorities"></select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label asp-for="TaskTypeId" class="form-label">Tipo Task</label>
+                                    <select asp-for="TaskTypeId" class="form-select" asp-items="ViewBag.TaskTypes"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Assegna a Collaboratori</label>
+                            <select name="SelectedUserIds" class="form-select" multiple size="4" asp-items="ViewBag.Users"></select>
+                            <small class="text-muted">Tieni premuto Ctrl (o Cmd) per selezioni multiple.</small>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" name="AssignToAll" class="form-check-input" id="assignAll" value="true">
+                            <label class="form-check-label" for="assignAll">Assegna a TUTTI i collaboratori della sede del progetto</label>
+                        </div>
+
+                        <div class="border rounded p-3 bg-light">
+                            <h6><i class="fas fa-redo me-2"></i>Ricorrenza</h6>
+                            <div class="form-check mb-2">
+                                <input asp-for="IsRecurring" class="form-check-input" id="isRecurring" />
+                                <label asp-for="IsRecurring" class="form-check-label">Task Ricorrente</label>
+                            </div>
+                            <div class="mb-0" id="recurrence-options" style="display: none;">
+                                <label asp-for="Recurrence" class="form-label small fw-bold">Frequenza</label>
+                                <select asp-for="Recurrence" class="form-select form-select-sm" asp-items="Html.GetEnumSelectList<Models.TaskRecurrence>()"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    document.getElementById('isRecurring').addEventListener('change', function() {
+                        document.getElementById('recurrence-options').style.display = this.checked ? 'block' : 'none';
+                    });
+                </script>
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between">
+                    <a asp-action="Index" asp-route-projectId="@Model.ProjectId" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Annulla
+                    </a>
+                    <button type="submit" class="btn btn-success btn-lg px-5">
+                        <i class="fas fa-save me-2"></i>Crea Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

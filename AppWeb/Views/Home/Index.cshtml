@@ -1,8 +1,171 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@using Models
+@{
+    ViewData["Title"] = "Dashboard Overview";
+    var stats = (DashboardStats)ViewBag.Stats;
+    var kanbanTasks = (List<TodoTask>)ViewBag.KanbanTasks;
+    var branchesSummary = (List<BranchSummary>)ViewBag.BranchesSummary;
+
+    int totalTasks = stats?.TotalTasks ?? 0;
+    int completedTasks = stats?.CompletedTasks ?? 0;
+    int inProgressTasks = stats?.InProgressTasks ?? 0;
+    int totalProjects = stats?.TotalProjects ?? 0;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="p-8">
+    <!-- Page Heading -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-black tracking-tight text-[#111418] dark:text-white">Dashboard Overview</h2>
+        <p class="text-[#617589] mt-1">Bentornato, <span class="font-semibold text-primary">@User.Identity.Name</span>. Ecco la panoramica globale.</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-[#617589]">Task Totali</span>
+                <span class="text-green-600 bg-green-100 px-2 py-0.5 rounded text-xs font-bold">+5%</span>
+            </div>
+            <p class="text-2xl font-black">@totalTasks</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-[#617589]">Progetti Attivi</span>
+                <span class="text-primary bg-primary/10 px-2 py-0.5 rounded text-xs font-bold">Live</span>
+            </div>
+            <p class="text-2xl font-black">@totalProjects</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-[#617589]">Task In Corso</span>
+                <span class="text-orange-500 bg-orange-100 px-2 py-0.5 rounded text-xs font-bold">@inProgressTasks</span>
+            </div>
+            <p class="text-2xl font-black">@(totalTasks > 0 ? (inProgressTasks * 100 / totalTasks) : 0)%</p>
+            <p class="text-[10px] text-[#617589] mt-1">Capacità Team</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm">
+            <div class="flex justify-between items-start mb-4">
+                <span class="text-sm font-medium text-[#617589]">Crescita Mensile</span>
+                <span class="text-green-600 bg-green-100 px-2 py-0.5 rounded text-xs font-bold">+12.5%</span>
+            </div>
+            <p class="text-2xl font-black">14.2%</p>
+        </div>
+    </div>
+
+    <!-- Main Grid Layout -->
+    <div class="grid grid-cols-12 gap-8">
+        <!-- Left: Project Overview & Tasks -->
+        <div class="col-span-12 lg:col-span-8 space-y-8">
+            <!-- Project Overview Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-[#dbe0e6] dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Progresso Progetti</h3>
+                    <a href="/Projects" class="text-sm text-primary font-bold">Vedi Tutti</a>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @if (branchesSummary != null) {
+                        foreach (var branch in branchesSummary.Take(4)) {
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <p class="text-sm font-bold">@branch.Name</p>
+                                    <span class="text-xs text-[#617589]">@branch.TaskCount Tasks</span>
+                                </div>
+                                <div class="h-2 bg-[#f0f2f4] dark:bg-gray-700 rounded-full">
+                                    <div class="h-full bg-primary rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        }
+                    } else {
+                        <p class="text-sm text-gray-500">Nessun progetto attivo trovato.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Pending Tasks List -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-[#dbe0e6] dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Task Recenti</h3>
+                    <a href="/TodoTasks" class="text-sm text-primary font-bold">Vedi Tutti</a>
+                </div>
+                <div class="divide-y divide-[#dbe0e6] dark:divide-gray-700">
+                    @if (kanbanTasks != null) {
+                        foreach (var task in kanbanTasks.Take(5)) {
+                            <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer" onclick="location.href='/TodoTasks/Edit/@task.Id'">
+                                <div class="flex items-center gap-4">
+                                    <div class="size-2 rounded-full @(task.Status == TodoStatus.Completed ? "bg-green-500" : task.Status == TodoStatus.InProgress ? "bg-orange-500" : "bg-gray-300")"></div>
+                                    <div>
+                                        <p class="text-sm font-bold">@task.Title</p>
+                                        <p class="text-xs text-[#617589]">@(task.Project?.Name ?? "N/A") • Scadenza: @task.Deadline.ToString("dd MMM")</p>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 text-[10px] font-bold uppercase rounded @(task.Priority?.Name == "High" ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600")">@(task.Priority?.Name ?? "Normal")</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar Widgets -->
+        <div class="col-span-12 lg:col-span-4 space-y-8">
+            <!-- Today's Timeline -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-[#dbe0e6] dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Timeline Oggi</h3>
+                    <span class="text-xs font-bold text-primary">@DateTime.Now.ToString("dd MMM")</span>
+                </div>
+                <div class="p-6 relative">
+                    <div class="absolute left-[31px] top-6 bottom-6 w-[2px] bg-gray-100 dark:bg-gray-700"></div>
+                    <div class="space-y-8">
+                        <div class="flex gap-4 relative z-10">
+                            <div class="size-4 rounded-full bg-primary ring-4 ring-white dark:ring-gray-800 mt-1"></div>
+                            <div class="flex flex-col">
+                                <p class="text-xs font-bold text-primary">09:00 AM</p>
+                                <p class="text-sm font-bold">Sync Operativo</p>
+                                <p class="text-xs text-[#617589]">Meeting Room A • 45 min</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 relative z-10">
+                            <div class="size-4 rounded-full bg-white dark:bg-gray-800 border-2 border-[#dbe0e6] dark:border-gray-600 ring-4 ring-white dark:ring-gray-800 mt-1"></div>
+                            <div class="flex flex-col">
+                                <p class="text-xs font-bold text-[#617589]">11:30 AM</p>
+                                <p class="text-sm font-bold">Review Progetti Sedi</p>
+                                <p class="text-xs text-[#617589]">Video Call • 1 ora</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 relative z-10">
+                            <div class="size-4 rounded-full bg-white dark:bg-gray-800 border-2 border-[#dbe0e6] dark:border-gray-600 ring-4 ring-white dark:ring-gray-800 mt-1"></div>
+                            <div class="flex flex-col">
+                                <p class="text-xs font-bold text-[#617589]">02:00 PM</p>
+                                <p class="text-sm font-bold">Colloquio Candidato</p>
+                                <p class="text-xs text-[#617589]">Meeting Room B • 30 min</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Branch Snapshot -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-[#dbe0e6] dark:border-gray-700 shadow-sm p-6">
+                <h3 class="font-bold text-lg mb-4">Snapshot Sedi</h3>
+                <div class="h-48 rounded-lg bg-gray-200 dark:bg-gray-700 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-cover bg-center" style='background-image: url("https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=600&q=80");'></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-white">location_on</span>
+                        <span class="text-white font-bold text-sm">Milan, Italy</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-col gap-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-[#617589]">Ora Locale</span>
+                        <span class="font-bold">@DateTime.Now.ToString("HH:mm")</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-[#617589]">Sedi Attive</span>
+                        <span class="font-bold">@(branchesSummary?.Count ?? 0)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

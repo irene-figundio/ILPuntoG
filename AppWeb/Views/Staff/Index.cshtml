@@ -1,0 +1,107 @@
+@model IEnumerable<Models.User>
+@{
+    ViewData["Title"] = "Gestione Staff";
+}
+
+<div class="p-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight mb-1">Gestione Staff</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Gestisci i dipendenti e le assegnazioni dei team in tutte le sedi.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button class="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#1a202c] border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold hover:shadow-sm transition-all">
+                <span class="material-symbols-outlined text-lg">download</span> Esporta
+            </button>
+            <button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-bold shadow-md hover:bg-primary/90 transition-all">
+                <span class="material-symbols-outlined text-lg">person_add</span> Aggiungi Dipendente
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-[#1a202c] p-4 rounded-xl border border-gray-200 dark:border-gray-800 mb-8 flex flex-wrap items-center gap-4">
+        <div class="relative flex-1 min-w-[240px]">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <input id="staffSearch" class="w-full pl-10 pr-4 py-2 bg-[#f0f2f4] dark:bg-[#2d3748] border-none rounded-lg text-sm focus:ring-2 focus:ring-primary" placeholder="Cerca per nome, ruolo o email..." type="text" />
+        </div>
+        <form method="get" asp-action="Index" class="flex items-center gap-4">
+            <div class="flex items-center gap-2 min-w-[180px]">
+                <span class="material-symbols-outlined text-gray-400">location_on</span>
+                <select name="branchId" class="flex-1 bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer" onchange="this.form.submit()">
+                    <option value="">Tutte le Sedi</option>
+                    @foreach (var b in (SelectList)ViewBag.Branches)
+                    {
+                        @if (ViewBag.BranchId?.ToString() == b.Value)
+                        {
+                            <option value="@b.Value" selected>@b.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@b.Value">@b.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="h-8 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
+            <div class="flex items-center gap-2 min-w-[150px]">
+                <span class="material-symbols-outlined text-gray-400">filter_list</span>
+                <select class="flex-1 bg-transparent border-none text-sm font-bold focus:ring-0 cursor-pointer">
+                    <option>Qualsiasi Ruolo</option>
+                    <option>Manager</option>
+                    <option>Developer</option>
+                    <option>Designer</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <!-- Staff Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="staffGrid">
+        @foreach (var user in Model)
+        {
+            <div class="staff-card bg-white dark:bg-[#1a202c] p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all relative group" data-info="@(user.Name.ToLower()) @(user.Email.ToLower())">
+                <button class="absolute top-4 right-4 text-gray-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">more_horiz</span>
+                </button>
+                <div class="flex items-start gap-4 mb-5">
+                    <div class="size-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl border border-gray-100 dark:border-gray-700">
+                        @(user.Name?.Length > 0 ? user.Name.Substring(0, 1).ToUpper() : "?")
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base">@user.Name</h3>
+                        <p class="text-primary text-xs font-bold uppercase tracking-wider mb-1">@(user.Role?.Name ?? "Utente")</p>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">ATTIVO</span>
+                    </div>
+                </div>
+                <div class="space-y-3 pt-4 border-t border-gray-50 dark:border-gray-800">
+                    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                        <span class="material-symbols-outlined text-lg">location_on</span>
+                        <span class="text-sm font-medium">@(user.UserBranches.FirstOrDefault()?.Branch?.Name ?? "N/A")</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                        <span class="material-symbols-outlined text-lg">mail</span>
+                        <span class="text-sm truncate">@user.Email</span>
+                    </div>
+                </div>
+                <div class="mt-5 flex gap-2">
+                    <button onclick="location.href='/Profile/Index/@user.Id'" class="flex-1 text-center py-2 bg-[#f0f2f4] dark:bg-[#2d3748] rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Profilo</button>
+                    <button class="flex-1 text-center py-2 border border-[#f0f2f4] dark:border-[#2d3748] rounded-lg text-xs font-bold hover:bg-primary hover:text-white hover:border-primary transition-all">Sposta</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $("#staffSearch").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#staffGrid .staff-card").filter(function() {
+                    $(this).toggle($(this).data("info").indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+}
