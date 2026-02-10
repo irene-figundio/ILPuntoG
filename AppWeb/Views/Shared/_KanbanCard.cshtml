@@ -7,7 +7,10 @@
         <span class="text-[10px] font-bold px-2 py-1 rounded @(Model.Priority?.LevelId >= 4 ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : (Model.Priority?.LevelId == 3 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"))">
             @(Model.Priority?.Name ?? "PRIORITY")
         </span>
-        <span class="material-symbols-outlined text-gray-300 group-hover:text-primary transition-colors">drag_indicator</span>
+        <div class="flex gap-1">
+             <button onclick="event.stopPropagation(); location.href='/TodoTasks/Edit/@Model.Id'" class="text-gray-300 hover:text-primary transition-colors"><span class="material-symbols-outlined text-sm">edit</span></button>
+             <span class="material-symbols-outlined text-gray-300 group-hover:text-primary transition-colors">drag_indicator</span>
+        </div>
     </div>
     <h4 class="font-bold text-sm mb-2 leading-snug">@Model.Title</h4>
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">@Model.Description</p>

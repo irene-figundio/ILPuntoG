@@ -43,6 +43,25 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateUser(int id, User user)
+    {
+        if (id != user.Id) return BadRequest();
+        _repository.Update(user);
+        await _repository.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var user = await _repository.GetByIdAsync(id);
+        if (user == null) return NotFound();
+        _repository.Remove(user);
+        await _repository.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(WebAPI.Models.ChangePasswordRequest request)
     {

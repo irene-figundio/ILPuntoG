@@ -62,6 +62,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<WorkLog> WorkLogs { get; set; }
     public DbSet<Document> Documents { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<GoogleCredential> GoogleCredentials { get; set; }
     public DbSet<UserBranch> UserBranches { get; set; }
     public DbSet<ClientBranch> ClientBranches { get; set; }
     public DbSet<TaskAssignment> TaskAssignments { get; set; }
@@ -115,6 +116,11 @@ public class ApplicationDbContext : DbContext
             .HasOne(ta => ta.User)
             .WithMany(u => u.TaskAssignments)
             .HasForeignKey(ta => ta.UserId);
+
+        modelBuilder.Entity<GoogleCredential>()
+            .HasOne(g => g.User)
+            .WithMany()
+            .HasForeignKey(g => g.UserId);
 
         // Seed Roles
         modelBuilder.Entity<Role>().HasData(

@@ -50,10 +50,24 @@ public class CalendarController : Controller
         return Json(await _apiService.ConnectGoogleCalendarAsync());
     }
 
-    [HttpPost]
-    public async Task<IActionResult> SyncGoogle()
+    [HttpGet]
+    public async Task<IActionResult> GetGoogleCalendars()
     {
-        return Json(await _apiService.SyncGoogleCalendarAsync());
+        return Json(await _apiService.GetGoogleCalendarsAsync());
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetGoogleEvents(string calendarId, DateTime start, DateTime end)
+    {
+        return Json(await _apiService.GetGoogleEventsAsync(calendarId, start, end));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateGoogleEvent(string calendarId, string eventId, [FromBody] object ev)
+    {
+        var success = await _apiService.UpdateGoogleEventAsync(calendarId, eventId, ev);
+        if (success) return Ok();
+        return BadRequest();
     }
 
     [HttpPost]
