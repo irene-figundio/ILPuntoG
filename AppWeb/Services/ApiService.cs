@@ -72,10 +72,12 @@ public class ApiService {
     }
 
     public async Task<List<Client>> GetClientsAsync(int? branchId = null) => await _httpClient.GetFromJsonAsync<List<Client>>("api/clients" + (branchId.HasValue ? "?branchId=" + branchId : "")) ?? new();
+    public async Task<Client?> GetClientAsync(int id) => await _httpClient.GetFromJsonAsync<Client>($"api/clients/{id}");
     public async Task CreateClientAsync(Client client) => await _httpClient.PostAsJsonAsync("api/clients", client);
     public async Task<List<TaskType>> GetTaskTypesAsync() => await _httpClient.GetFromJsonAsync<List<TaskType>>("api/tasktypes") ?? new();
     public async Task<List<Priority>> GetPrioritiesAsync() => await _httpClient.GetFromJsonAsync<List<Priority>>("api/priorities") ?? new();
     public async Task<List<User>> GetUsersAsync() => await _httpClient.GetFromJsonAsync<List<User>>("api/users") ?? new();
+    public async Task<User?> GetUserAsync(int id) => await _httpClient.GetFromJsonAsync<User>($"api/users/{id}");
 
     public async Task<List<WorkLog>> GetWorkLogsAsync(int? userId = null, int? month = null, int? year = null)
     {
@@ -95,9 +97,9 @@ public class ApiService {
     public async Task UpdateWorkLogAsync(int id, WorkLog log) => await _httpClient.PutAsJsonAsync($"api/worklogs/{id}", log);
     public async Task DeleteWorkLogAsync(int id) => await _httpClient.DeleteAsync($"api/worklogs/{id}");
 
-    public async Task<List<dynamic>> GetWorkLogReportAsync(int month, int year)
+    public async Task<List<WorkLogReportItem>> GetWorkLogReportAsync(int month, int year)
     {
-        return await _httpClient.GetFromJsonAsync<List<dynamic>>($"api/worklogs/report?month={month}&year={year}") ?? new();
+        return await _httpClient.GetFromJsonAsync<List<WorkLogReportItem>>($"api/worklogs/report?month={month}&year={year}") ?? new();
     }
 
     public async Task<DashboardStats?> GetDashboardStatsAsync()

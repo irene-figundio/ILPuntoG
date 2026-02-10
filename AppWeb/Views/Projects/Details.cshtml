@@ -1,0 +1,116 @@
+@model Models.Project
+@{
+    ViewData["Title"] = "Dettagli Progetto: " + Model.Name;
+}
+
+<div class="p-4 lg:p-8 max-w-5xl mx-auto">
+    <div class="flex items-center gap-2 text-gray-500 mb-6 text-sm">
+        <a href="/Projects" class="hover:text-primary transition-colors">Progetti</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-bold text-gray-900 dark:text-white">@Model.Name</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Info Column -->
+        <div class="lg:col-span-2 space-y-8">
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 lg:p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="size-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-4xl">folder</span>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-black">@Model.Name</h1>
+                            <div class="flex items-center gap-2 text-gray-500 text-sm mt-1">
+                                <span class="material-symbols-outlined text-base">location_on</span>
+                                @(Model.Branch?.Name ?? "N/A")
+                            </div>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                        @(Model.Status == Models.ProjectStatus.Completed ? "bg-green-100 text-green-600" :
+                          Model.Status == Models.ProjectStatus.InProgress ? "bg-blue-100 text-blue-600" :
+                          "bg-orange-100 text-orange-600")">
+                        @Model.Status
+                    </span>
+                </div>
+
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Descrizione</h3>
+                <p class="text-gray-600 dark:text-gray-400 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl">
+                    @(string.IsNullOrEmpty(Model.Description) ? "Nessuna descrizione fornita." : Model.Description)
+                </p>
+            </div>
+
+            <!-- Task List for this project -->
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Attività Correlate</h3>
+                    <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full font-bold">@Model.Tasks.Count</span>
+                </div>
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach (var task in Model.Tasks)
+                    {
+                        <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer" onclick="location.href='/TodoTasks/Edit/@task.Id'">
+                            <div class="flex items-center gap-4">
+                                <div class="size-2 rounded-full @(task.Status == Models.TodoStatus.Completed ? "bg-green-500" : task.Status == Models.TodoStatus.InProgress ? "bg-blue-500" : "bg-gray-300")"></div>
+                                <div>
+                                    <p class="text-sm font-bold">@task.Title</p>
+                                    <p class="text-[10px] text-gray-400">Scadenza: @task.Deadline.ToString("dd MMM yyyy")</p>
+                                </div>
+                            </div>
+                            <span class="material-symbols-outlined text-gray-300">chevron_right</span>
+                        </div>
+                    }
+                    @if (!Model.Tasks.Any())
+                    {
+                        <div class="p-12 text-center text-gray-400 italic">Nessuna attività registrata.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="space-y-8">
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
+                <h3 class="font-bold text-lg mb-6">Informazioni Rapide</h3>
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="size-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-500">
+                            <span class="material-symbols-outlined">person</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Cliente</p>
+                            <p class="text-sm font-bold">@(Model.Client?.Name ?? "Nessun cliente")</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="size-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-500">
+                            <span class="material-symbols-outlined">analytics</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Completamento</p>
+                            @{
+                                var progress = Model.Tasks.Any() ? (Model.Tasks.Count(t => t.Status == Models.TodoStatus.Completed) * 100 / Model.Tasks.Count) : 0;
+                            }
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full" style="width: @progress%"></div>
+                                </div>
+                                <span class="text-xs font-black text-primary">@progress%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                    <button onclick="location.href='/Projects/Edit/@Model.Id'" class="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 py-2.5 rounded-xl text-sm font-bold transition-all">
+                        Modifica Progetto
+                    </button>
+                    <button onclick="location.href='/TodoTasks/Create?projectId=@Model.Id'" class="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                        Aggiungi Attività
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

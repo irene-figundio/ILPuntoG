@@ -25,6 +25,13 @@ public class TodoTasksController : Controller
         return View(tasks);
     }
 
+    public async Task<IActionResult> Details(int id)
+    {
+        var task = await _apiService.GetTaskAsync(id);
+        if (task == null) return NotFound();
+        return View(task);
+    }
+
     public async Task<IActionResult> Create(int? projectId)
     {
         var projects = await _apiService.GetProjectsAsync();

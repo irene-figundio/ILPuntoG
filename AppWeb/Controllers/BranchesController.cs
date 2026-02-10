@@ -21,6 +21,13 @@ public class BranchesController : Controller
         return View(branches);
     }
 
+    public async Task<IActionResult> Details(int id)
+    {
+        var branch = await _apiService.GetBranchAsync(id);
+        if (branch == null) return NotFound();
+        return View(branch);
+    }
+
     public IActionResult Create()
     {
         return View();

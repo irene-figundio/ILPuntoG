@@ -1,0 +1,94 @@
+@model Models.Client
+@{
+    ViewData["Title"] = "Dettagli Cliente: " + Model.Name;
+}
+
+<div class="p-4 lg:p-8 max-w-5xl mx-auto">
+    <div class="flex items-center gap-2 text-gray-500 mb-6 text-sm">
+        <a href="/Clients" class="hover:text-primary transition-colors">Clienti</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-bold text-gray-900 dark:text-white">@Model.Name</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-8">
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8">
+                <div class="flex items-start gap-6">
+                    <div class="size-20 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
+                        <span class="material-symbols-outlined text-5xl">person</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h1 class="text-3xl font-black truncate">@Model.Name</h1>
+                        <p class="text-gray-500 mt-1">Anagrafica cliente aziendale</p>
+
+                        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                                <span class="material-symbols-outlined text-gray-400">mail</span>
+                                <div class="min-w-0">
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Email</p>
+                                    <p class="text-sm font-bold truncate">@Model.Email</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                                <span class="material-symbols-outlined text-gray-400">phone</span>
+                                <div>
+                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Telefono</p>
+                                    <p class="text-sm font-bold">@Model.PhoneNumber</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Branches -->
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Sedi Collegate</h3>
+                    <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full font-bold">@Model.ClientBranches.Count</span>
+                </div>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @foreach (var cb in Model.ClientBranches)
+                    {
+                        <div class="p-4 border border-gray-100 dark:border-gray-800 rounded-xl flex items-center justify-between hover:border-primary/50 transition-all cursor-pointer" onclick="location.href='/Branches/Details/@cb.BranchId'">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-gray-400">location_on</span>
+                                <span class="text-sm font-bold">@cb.Branch?.Name</span>
+                            </div>
+                            <span class="material-symbols-outlined text-gray-300">chevron_right</span>
+                        </div>
+                    }
+                    @if (!Model.ClientBranches.Any())
+                    {
+                        <div class="col-span-full p-8 text-center text-gray-400 italic">Nessuna sede associata.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
+                <h3 class="font-bold text-lg mb-6">Progetti Cliente</h3>
+                <div class="space-y-4">
+                    @foreach (var proj in Model.Projects)
+                    {
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl hover:bg-primary/5 transition-colors cursor-pointer group" onclick="location.href='/Projects/Details/@proj.Id'">
+                            <p class="text-sm font-bold group-hover:text-primary transition-colors">@proj.Name</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-gray-700 text-gray-500 font-bold uppercase">@proj.Status</span>
+                                <span class="text-[10px] text-gray-400 font-bold">@proj.Tasks.Count Tasks</span>
+                            </div>
+                        </div>
+                    }
+                    @if (!Model.Projects.Any())
+                    {
+                        <p class="text-center py-6 text-gray-400 text-xs italic">Nessun progetto attivo.</p>
+                    }
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-100 dark:border-gray-800">
+                    <button class="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">Nuovo Progetto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,98 @@
+@model Models.TodoTask
+@{
+    ViewData["Title"] = "Dettagli Attività: " + Model.Title;
+}
+
+<div class="p-4 lg:p-8 max-w-4xl mx-auto">
+    <div class="flex items-center gap-2 text-gray-500 mb-6 text-sm">
+        <a href="/TodoTasks" class="hover:text-primary transition-colors">Attività</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-bold text-gray-900 dark:text-white">Dettagli</span>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="bg-primary p-6 text-white flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="size-14 bg-white/20 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl">task</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black">@Model.Title</h1>
+                    <p class="text-white/80 text-xs">@Model.TaskType?.Name</p>
+                </div>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider">@Model.Status</span>
+        </div>
+
+        <div class="p-6 lg:p-8 space-y-10">
+            <section>
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Descrizione</h3>
+                <div class="text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
+                    @(string.IsNullOrEmpty(Model.Description) ? "Nessuna descrizione." : Model.Description)
+                </div>
+            </section>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <section class="space-y-4">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Dettagli Task</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-gray-400">calendar_today</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">Scadenza</p>
+                                <p class="text-sm font-bold">@Model.Deadline.ToString("dd MMMM yyyy")</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-gray-400">flag</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">Priorità</p>
+                                <p class="text-sm font-bold text-@(Model.Priority?.LevelId >= 4 ? "red-500" : "blue-500")">@Model.Priority?.Name</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-gray-400">folder</span>
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">Progetto</p>
+                                <p class="text-sm font-bold text-primary cursor-pointer hover:underline" onclick="location.href='/Projects/Details/@Model.ProjectId'">@Model.Project?.Name</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="space-y-4">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Assegnatari</h3>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (var assign in Model.TaskAssignments)
+                        {
+                            <div class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                                <div class="size-6 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">@(assign.User?.Name?.Substring(0,1) ?? "?")</div>
+                                <span class="text-xs font-bold">@assign.User?.Name</span>
+                            </div>
+                        }
+                        @if (!Model.TaskAssignments.Any())
+                        {
+                            <p class="text-gray-400 text-xs italic">Nessun assegnatario.</p>
+                        }
+                    </div>
+                </section>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.GitLabRepoUrl))
+            {
+                <section class="p-4 bg-orange-50 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-900/30 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-orange-600">code</span>
+                        <span class="text-sm font-bold text-orange-800 dark:text-orange-400">GitLab Repository</span>
+                    </div>
+                    <a href="@Model.GitLabRepoUrl" target="_blank" class="px-4 py-1.5 bg-white dark:bg-gray-800 border border-orange-200 text-orange-600 text-xs font-black rounded-lg hover:bg-orange-600 hover:text-white transition-all uppercase">Apri Repo</a>
+                </section>
+            }
+
+            <div class="pt-8 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
+                <button onclick="if(confirm('Eliminare attività?')) location.href='/TodoTasks/Delete/@Model.Id'" class="text-red-500 text-sm font-bold px-6 py-2">Elimina</button>
+                <button onclick="location.href='/TodoTasks/Edit/@Model.Id'" class="bg-primary text-white px-10 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">Modifica</button>
+            </div>
+        </div>
+    </div>
+</div>

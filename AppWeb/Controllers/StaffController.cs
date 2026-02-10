@@ -31,4 +31,11 @@ public class StaffController : Controller
 
         return View(users);
     }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var user = await _apiService.GetUserAsync(id);
+        if (user == null) return NotFound();
+        return View(user);
+    }
 }

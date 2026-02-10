@@ -1,0 +1,108 @@
+@model Models.User
+@{
+    ViewData["Title"] = "Dettagli Collaboratore: " + Model.Name;
+}
+
+<div class="p-4 lg:p-8 max-w-5xl mx-auto">
+    <div class="flex items-center gap-2 text-gray-500 mb-6 text-sm">
+        <a href="/Staff" class="hover:text-primary transition-colors">Staff</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-bold text-gray-900 dark:text-white">@Model.Name</span>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8 mb-8">
+        <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <div class="size-32 rounded-3xl bg-primary/10 flex items-center justify-center text-primary text-5xl font-black shrink-0">
+                @(Model.Name.Substring(0,1).ToUpper())
+            </div>
+            <div class="flex-1 text-center md:text-left min-w-0">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-3xl font-black mb-1">@Model.Name</h1>
+                        <p class="text-primary font-bold uppercase text-xs tracking-widest">@(Model.Role?.Name ?? "Utente")</p>
+                    </div>
+                    <div class="flex justify-center md:justify-start gap-2">
+                         <span class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-[10px] font-black uppercase">Attivo</span>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-gray-400">mail</span>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Email</p>
+                            <p class="text-sm font-bold truncate">@Model.Email</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-gray-400">person</span>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Username</p>
+                            <p class="text-sm font-bold">@Model.Username</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-gray-400">location_on</span>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Sede Principale</p>
+                            <p class="text-sm font-bold">@(Model.UserBranches.FirstOrDefault()?.Branch?.Name ?? "N/A")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Recent Work Logs -->
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Ultime Presenze</h3>
+                    <a href="/WorkLogs?userId=@Model.Id" class="text-xs font-bold text-primary">Vedi Tutte</a>
+                </div>
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach (var log in Model.WorkLogs.OrderByDescending(l => l.Date).Take(5))
+                    {
+                        <div class="px-6 py-4 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="size-2 rounded-full bg-primary"></div>
+                                <div>
+                                    <p class="text-sm font-bold">@log.Date.ToString("dd MMM yyyy")</p>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase">@log.Type</p>
+                                </div>
+                            </div>
+                            <span class="text-sm font-black text-primary">@log.Hours.ToString("F1") h</span>
+                        </div>
+                    }
+                    @if (!Model.WorkLogs.Any())
+                    {
+                        <div class="p-12 text-center text-gray-400 italic">Nessun registro presente.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-8">
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
+                <h3 class="font-bold text-lg mb-6">Task Assegnati</h3>
+                <div class="space-y-4">
+                    @foreach (var assign in Model.TaskAssignments.Take(5))
+                    {
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl hover:bg-primary/5 transition-colors cursor-pointer group" onclick="location.href='/TodoTasks/Details/@assign.TodoTaskId'">
+                            <p class="text-xs font-bold group-hover:text-primary transition-colors line-clamp-1">@assign.TodoTask?.Title</p>
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-[10px] text-gray-400 font-bold">Scadenza: @assign.TodoTask?.Deadline.ToString("dd MMM")</span>
+                                <span class="text-[10px] font-black text-blue-500 uppercase">@assign.TodoTask?.Status</span>
+                            </div>
+                        </div>
+                    }
+                    @if (!Model.TaskAssignments.Any())
+                    {
+                        <p class="text-center py-6 text-gray-400 text-xs italic">Nessun task attivo.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

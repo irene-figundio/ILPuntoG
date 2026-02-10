@@ -26,6 +26,13 @@ public class AppointmentsController : Controller
         return View(appointments);
     }
 
+    public async Task<IActionResult> Details(int id)
+    {
+        var appt = await _apiService.GetAppointmentAsync(id);
+        if (appt == null) return NotFound();
+        return View(appt);
+    }
+
     public async Task<IActionResult> Create(int? branchId)
     {
         var branches = await _apiService.GetBranchesAsync();
