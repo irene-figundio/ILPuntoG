@@ -28,6 +28,14 @@ public class ClientsController : ControllerBase
         return Ok(clients);
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var client = await _clientRepo.GetByIdAsync(id);
+        if (client == null) return NotFound();
+        return Ok(client);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(Client client)
     {

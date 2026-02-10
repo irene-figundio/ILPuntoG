@@ -27,6 +27,14 @@ public class UsersController : ControllerBase
         return Ok(await _repository.GetAllAsync());
     }
 
+    [HttpGet("{id}")]
+    public async Task<ActionResult<User>> GetUser(int id)
+    {
+        var user = await _repository.GetByIdAsync(id);
+        if (user == null) return NotFound();
+        return Ok(user);
+    }
+
     [HttpPost]
     public async Task<ActionResult<User>> CreateUser(User user)
     {

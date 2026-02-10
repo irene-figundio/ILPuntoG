@@ -1,5 +1,4 @@
-@using System.Text.Json
-@model IEnumerable<dynamic>
+@model IEnumerable<Models.WorkLogReportItem>
 @{
     ViewData["Title"] = "Report Mensile Presenze";
     int month = ViewBag.Month;
@@ -46,21 +45,20 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                     @foreach (var item in Model)
                     {
-                        var element = (JsonElement)item;
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
                             <td class="p-4">
                                 <div class="flex items-center gap-3">
                                     <div class="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
-                                        @(element.TryGetProperty("userName", out var nameEl) ? nameEl.GetString()?.Substring(0,1) : "U")
+                                        @(item.UserName?.Length > 0 ? item.UserName.Substring(0,1) : "U")
                                     </div>
-                                    <span class="text-sm font-bold">@(nameEl.GetString() ?? "N/D")</span>
+                                    <span class="text-sm font-bold">@item.UserName</span>
                                 </div>
                             </td>
-                            <td class="p-4 text-center text-sm font-black text-primary">@element.GetProperty("totalHours").GetDouble() h</td>
-                            <td class="p-4 text-center text-sm font-medium text-orange-500">@element.GetProperty("ferie").GetDouble() h</td>
-                            <td class="p-4 text-center text-sm font-medium text-blue-500">@element.GetProperty("permessi").GetDouble() h</td>
-                            <td class="p-4 text-center text-sm font-medium text-red-500">@element.GetProperty("malattia").GetDouble() h</td>
-                            <td class="p-4 text-center text-sm font-bold">@element.GetProperty("totalDays").GetInt32()</td>
+                            <td class="p-4 text-center text-sm font-black text-primary">@item.TotalHours h</td>
+                            <td class="p-4 text-center text-sm font-medium text-orange-500">@item.Ferie h</td>
+                            <td class="p-4 text-center text-sm font-medium text-blue-500">@item.Permessi h</td>
+                            <td class="p-4 text-center text-sm font-medium text-red-500">@item.Malattia h</td>
+                            <td class="p-4 text-center text-sm font-bold">@item.TotalDays</td>
                         </tr>
                     }
                     @if (!Model.Any())

@@ -25,6 +25,13 @@ public class ProjectsController : Controller
         return View(projects);
     }
 
+    public async Task<IActionResult> Details(int id)
+    {
+        var project = await _apiService.GetProjectAsync(id);
+        if (project == null) return NotFound();
+        return View(project);
+    }
+
     public async Task<IActionResult> Create(int? branchId)
     {
         var branches = await _apiService.GetBranchesAsync();

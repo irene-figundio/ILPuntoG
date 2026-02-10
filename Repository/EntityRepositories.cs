@@ -12,9 +12,15 @@ public class BranchRepository : GenericRepository<Branch>, IBranchRepository
 {
     public BranchRepository(ApplicationDbContext context) : base(context) { }
 
+    public override async Task<IEnumerable<Branch>> GetAllAsync()
+    {
+        return await _dbSet.Include(b => b.Projects).ToListAsync();
+    }
+
     public override async Task<Branch?> GetByIdAsync(int id)
     {
         return await _dbSet
+            .Include(b => b.Projects)
             .Include(b => b.UserBranches)
                 .ThenInclude(ub => ub.User)
             .FirstOrDefaultAsync(b => b.Id == id);
@@ -63,6 +69,11 @@ public class AppointmentRepository : GenericRepository<Appointment>, IAppointmen
     public async Task<IEnumerable<Appointment>> GetAppointmentsByBranchAsync(int branchId)
     {
         return await _dbSet.Include(a => a.Branch).Include(a => a.Project).Where(a => a.BranchId == branchId).ToListAsync();
+    }
+
+    public override async Task<Appointment?> GetByIdAsync(int id)
+    {
+        return await _dbSet.Include(a => a.Branch).Include(a => a.Project).FirstOrDefaultAsync(a => a.Id == id);
     }
 }
 
@@ -128,7 +139,22 @@ public class UserRepository : GenericRepository<User>, IUserRepository
             .Include(u => u.Role)
             .Include(u => u.UserBranches)
                 .ThenInclude(ub => ub.Branch)
+            .Include(u => u.WorkLogs)
+            .Include(u => u.TaskAssignments)
+                .ThenInclude(ta => ta.TodoTask)
             .ToListAsync();
+    }
+
+    public override async Task<User?> GetByIdAsync(int id)
+    {
+        return await _dbSet
+            .Include(u => u.Role)
+            .Include(u => u.UserBranches)
+                .ThenInclude(ub => ub.Branch)
+            .Include(u => u.WorkLogs)
+            .Include(u => u.TaskAssignments)
+                .ThenInclude(ta => ta.TodoTask)
+            .FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task<User?> GetByUsernameAsync(string username)
@@ -151,6 +177,26 @@ public interface IClientRepository : IRepository<Client> { }
 public class ClientRepository : GenericRepository<Client>, IClientRepository
 {
     public ClientRepository(ApplicationDbContext context) : base(context) { }
+
+    public override async Task<IEnumerable<Client>> GetAllAsync()
+    {
+        return await _dbSet
+            .Include(c => c.Projects)
+                .ThenInclude(p => p.Tasks)
+            .Include(c => c.ClientBranches)
+                .ThenInclude(cb => cb.Branch)
+            .ToListAsync();
+    }
+
+    public override async Task<Client?> GetByIdAsync(int id)
+    {
+        return await _dbSet
+            .Include(c => c.Projects)
+                .ThenInclude(p => p.Tasks)
+            .Include(c => c.ClientBranches)
+                .ThenInclude(cb => cb.Branch)
+            .FirstOrDefaultAsync(c => c.Id == id);
+    }
 }
 
 public interface ITaskTypeRepository : IRepository<TaskType> { }

@@ -50,20 +50,19 @@ public class WorkLogsController : ControllerBase
 
     [HttpGet("report")]
     [Authorize(Roles = Roles.SuperAdmin)]
-    public async Task<IActionResult> GetReport(int month, int year)
+    public async Task<ActionResult<IEnumerable<WorkLogReportItem>>> GetReport(int month, int year)
     {
         var logs = await _repository.GetAllAsync();
         var filtered = logs.Where(l => l.Date.Month == month && l.Date.Year == year).ToList();
 
         var report = filtered.GroupBy(l => l.UserId)
-            .Select(g => new {
-                UserId = g.Key,
-                UserName = g.First().User?.Name,
-                TotalHours = g.Sum(l => l.Hours),
+            .Select(g => new WorkLogReportItem {
+                UserName = g.First().User?.Name ?? "Utente Ignoto",
+                TotalHours = (double)g.Sum(l => l.Hours),
                 TotalDays = g.Select(l => l.Date.Date).Distinct().Count(),
-                Ferie = g.Where(l => l.Type == WorkLogType.Holiday).Sum(l => l.Hours),
-                Permessi = g.Where(l => l.Type == WorkLogType.Permit).Sum(l => l.Hours),
-                Malattia = g.Where(l => l.Type == WorkLogType.Sickness).Sum(l => l.Hours)
+                Ferie = (double)g.Where(l => l.Type == WorkLogType.Holiday).Sum(l => l.Hours),
+                Permessi = (double)g.Where(l => l.Type == WorkLogType.Permit).Sum(l => l.Hours),
+                Malattia = (double)g.Where(l => l.Type == WorkLogType.Sickness).Sum(l => l.Hours)
             });
 
         return Ok(report);

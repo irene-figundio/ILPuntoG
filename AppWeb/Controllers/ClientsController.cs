@@ -16,6 +16,13 @@ public class ClientsController : Controller
         return View(clients);
     }
 
+    public async Task<IActionResult> Details(int id)
+    {
+        var client = await _apiService.GetClientAsync(id);
+        if (client == null) return NotFound();
+        return View(client);
+    }
+
     public IActionResult Create() => View();
 
     [HttpPost]

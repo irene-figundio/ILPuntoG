@@ -10,4 +10,5 @@ public class Client
     public string PhoneNumber { get; set; } = string.Empty;
 
     public List<ClientBranch> ClientBranches { get; set; } = new();
+    public List<Project> Projects { get; set; } = new();
 }
