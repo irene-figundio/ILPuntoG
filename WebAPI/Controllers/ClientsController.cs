@@ -41,6 +41,25 @@ public class ClientsController : ControllerBase
     {
         await _clientRepo.AddAsync(client);
         await _clientRepo.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetAll), new { id = client.Id }, client);
+        return CreatedAtAction(nameof(GetById), new { id = client.Id }, client);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, Client client)
+    {
+        if (id != client.Id) return BadRequest();
+        _clientRepo.Update(client);
+        await _clientRepo.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var client = await _clientRepo.GetByIdAsync(id);
+        if (client == null) return NotFound();
+        _clientRepo.Remove(client);
+        await _clientRepo.SaveChangesAsync();
+        return NoContent();
     }
 }

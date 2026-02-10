@@ -31,4 +31,24 @@ public class ClientsController : Controller
         await _apiService.CreateClientAsync(client);
         return RedirectToAction(nameof(Index));
     }
+
+    public async Task<IActionResult> Edit(int id)
+    {
+        var client = await _apiService.GetClientAsync(id);
+        if (client == null) return NotFound();
+        return View(client);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Edit(int id, Client client)
+    {
+        await _apiService.UpdateClientAsync(id, client);
+        return RedirectToAction(nameof(Index));
+    }
+
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _apiService.DeleteClientAsync(id);
+        return RedirectToAction(nameof(Index));
+    }
 }

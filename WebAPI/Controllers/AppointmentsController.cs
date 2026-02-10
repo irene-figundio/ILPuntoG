@@ -51,6 +51,16 @@ public class AppointmentsController : ControllerBase
         return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, appointment);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAppointment(int id, Appointment appointment)
+    {
+        if (id != appointment.Id) return BadRequest();
+        _repository.Update(appointment);
+        await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Update", "Appointment", appointment.Id.ToString(), appointment.Description);
+        return NoContent();
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAppointment(int id)
     {

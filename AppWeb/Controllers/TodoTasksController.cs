@@ -57,8 +57,12 @@ public class TodoTasksController : Controller
     {
         var task = await _apiService.GetTaskAsync(id);
         if (task == null) return NotFound();
+
         var projects = await _apiService.GetProjectsAsync();
         ViewBag.Projects = new SelectList(projects, "Id", "Name", task.ProjectId);
+        ViewBag.Priorities = new SelectList(await _apiService.GetPrioritiesAsync(), "Id", "Name", task.PriorityId);
+        ViewBag.TaskTypes = new SelectList(await _apiService.GetTaskTypesAsync(), "Id", "Name", task.TaskTypeId);
+
         return View(task);
     }
 

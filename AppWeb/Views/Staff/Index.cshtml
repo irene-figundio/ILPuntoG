@@ -64,7 +64,7 @@
                 <button class="absolute top-4 right-4 text-gray-400 hover:text-primary transition-colors">
                     <span class="material-symbols-outlined">more_horiz</span>
                 </button>
-                <div class="flex items-start gap-4 mb-5">
+                <div class="flex items-start gap-4 mb-5 cursor-pointer" onclick="location.href='/Staff/Details/@user.Id'">
                     <div class="size-14 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-xl border border-gray-100 dark:border-gray-700">
                         @(user.Name?.Length > 0 ? user.Name.Substring(0, 1).ToUpper() : "?")
                     </div>
