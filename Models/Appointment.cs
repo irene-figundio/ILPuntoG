@@ -17,4 +17,9 @@ public class Appointment
 
     public int BranchId { get; set; }
     public Branch? Branch { get; set; }
+
+    public string? GoogleEventId { get; set; }
+    public string? GoogleCalendarId { get; set; }
+    public SyncStatus SyncStatus { get; set; } = SyncStatus.NotSynced;
+    public string? RecurrenceRule { get; set; }
 }

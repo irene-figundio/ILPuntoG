@@ -22,3 +22,10 @@ public enum TodoStatus
     InProgress,
     Completed
 }
+
+public enum SyncStatus
+{
+    NotSynced,
+    Synced,
+    Failed
+}
