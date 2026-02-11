@@ -167,7 +167,7 @@
             const end = new Date();
             end.setHours(23, 59, 59, 999);
 
-            const events = await $.get('/Calendar/GetGoogleEvents', { calendarId: 'primary', start: start.toISOString(), end: end.toISOString() });
+            const events = await $.get('/Calendar/GetGoogleEvents', { calendarId: 'all', start: start.toISOString(), end: end.toISOString() });
 
             if (events.length === 0) {
                 $('#timeline-container').html('<p class="text-xs text-gray-500">Nessun evento per oggi.</p>');

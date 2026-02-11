@@ -75,13 +75,54 @@ public class GoogleCalendarService
     public async Task<IEnumerable<Event>> GetEventsAsync(int userId, string calendarId, DateTime start, DateTime end)
     {
         var service = await GetCalendarServiceAsync(userId);
-        var request = service.Events.List(calendarId);
-        request.TimeMinDateTimeOffset = start;
-        request.TimeMaxDateTimeOffset = end;
-        request.SingleEvents = true; // Expand recurrences
-        request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
-        var events = await request.ExecuteAsync();
-        return events.Items;
+        var calendarsToSearch = new List<string>();
+
+        if (string.IsNullOrEmpty(calendarId) || calendarId == "all")
+        {
+            var calendarList = await service.CalendarList.List().ExecuteAsync();
+
+            // Priority 1: "Irene Graldev"
+            var irene = calendarList.Items.FirstOrDefault(c => c.Summary.Contains("Irene Graldev", StringComparison.OrdinalIgnoreCase));
+            if (irene != null) calendarsToSearch.Add(irene.Id);
+
+            // Priority 2: Primary and Branch calendars
+            var branchCalendars = await GetUserBranchCalendarsAsync(userId);
+            calendarsToSearch.AddRange(branchCalendars);
+
+            // Distinct in case primary is already there
+            calendarsToSearch = calendarsToSearch.Distinct().ToList();
+        }
+        else
+        {
+            calendarsToSearch.Add(calendarId);
+        }
+
+        var allEvents = new List<Event>();
+        foreach (var calId in calendarsToSearch)
+        {
+            try
+            {
+                var request = service.Events.List(calId);
+                // Fix: Start of today in UTC to avoid timezone issues
+                var timeMin = DateTime.UtcNow.Date;
+                request.TimeMinDateTimeOffset = timeMin > start ? timeMin : start;
+                request.TimeMaxDateTimeOffset = end;
+                request.SingleEvents = true;
+                request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
+
+                var result = await request.ExecuteAsync();
+                var items = result.Items ?? new List<Event>();
+
+                Console.WriteLine($"[GoogleCalendarService] Found {items.Count} events in calendar {calId}");
+                allEvents.AddRange(items);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GoogleCalendarService] Error fetching events from {calId}: {ex.Message}");
+            }
+        }
+
+        return allEvents.OrderBy(e => e.Start.DateTimeDateTimeOffset?.DateTime ?? (DateTime.TryParse(e.Start.Date, out var dt) ? dt : DateTime.MinValue));
     }
 
     public async Task<Event> CreateEventAsync(int userId, string calendarId, Event ev)
@@ -182,22 +223,29 @@ public class GoogleCalendarService
 
     public async Task<List<string>> GetUserBranchCalendarsAsync(int userId)
     {
-        var branches = await _context.UserBranches
+        var branchIds = await _context.UserBranches
             .Where(ub => ub.UserId == userId)
             .Include(ub => ub.Branch)
             .Select(ub => ub.Branch!.GoogleCalendarId)
             .Where(id => !string.IsNullOrEmpty(id))
-            .ToListAsync() as List<string?> ?? new List<string?>();
-
-        var branchIds = branches.Where(id => id != null).Select(id => id!).ToList();
+            .ToListAsync();
 
         var userCred = await _context.GoogleCredentials.FirstOrDefaultAsync(c => c.UserId == userId);
         if (userCred != null && !string.IsNullOrEmpty(userCred.CalendarEmail))
         {
             branchIds.Add("primary");
+
+            try
+            {
+                var service = await GetCalendarServiceAsync(userId);
+                var calendarList = await service.CalendarList.List().ExecuteAsync();
+                var irene = calendarList.Items.FirstOrDefault(c => c.Summary.Contains("Irene Graldev", StringComparison.OrdinalIgnoreCase));
+                if (irene != null) branchIds.Add(irene.Id);
+            }
+            catch {}
         }
 
-        return branchIds.Distinct().ToList();
+        return branchIds.Where(id => id != null).Select(id => id!).Distinct().ToList();
     }
 
     public async Task<List<(DateTime Start, DateTime End)>> GetFreeSlotsAsync(int userId, DateTime start, DateTime end)
