@@ -1,4 +1,5 @@
 @model Models.Appointment
+@using System.Text.Json
 
 @{
     ViewData["Title"] = "Modifica Appuntamento: " + Model.Description;
@@ -58,6 +59,35 @@
                         </select>
                     </div>
                 </div>
+
+                @if (ViewBag.GoogleCalendars != null)
+                {
+                    <div class="p-4 bg-primary/5 rounded-2xl border border-primary/10 space-y-4">
+                        <div class="flex items-center gap-2 text-primary">
+                            <span class="material-symbols-outlined text-lg">sync@if(!string.IsNullOrEmpty(Model.GoogleEventId)){<text>_saved</text>}</span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Sincronizzazione Google Calendar</span>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" name="SyncWithGoogle" value="true" class="size-5 rounded border-gray-300 text-primary focus:ring-primary" @(string.IsNullOrEmpty(Model.GoogleEventId) ? "" : "checked") />
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Calendario @(string.IsNullOrEmpty(Model.GoogleEventId) ? "di destinazione" : "collegato")</label>
+                                <select name="GoogleCalendarId" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg text-xs focus:ring-2 focus:ring-primary transition-all">
+                                    @foreach (var cal in (List<JsonElement>)ViewBag.GoogleCalendars)
+                                    {
+                                        <option value="@cal.GetProperty("id").GetString()">@cal.GetProperty("summary").GetString()</option>
+                                    }
+                                </select>
+                                @if (!string.IsNullOrEmpty(Model.GoogleEventId))
+                                {
+                                    <p class="text-[9px] text-green-500 font-bold mt-1">Sincronizzato: @Model.GoogleEventId</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
 
                 <div class="pt-4 flex items-center justify-end gap-3">
                     <a href="/Appointments/Details/@Model.Id" class="px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">Annulla</a>

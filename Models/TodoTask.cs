@@ -38,5 +38,11 @@ public class TodoTask
 
     public string? GitLabRepoUrl { get; set; }
 
+    public string? GoogleEventId { get; set; }
+    public string? GoogleCalendarId { get; set; }
+    public SyncStatus SyncStatus { get; set; } = SyncStatus.NotSynced;
+    public bool IsAllDay { get; set; }
+    public string? RecurrenceRule { get; set; }
+
     public List<TaskAssignment> TaskAssignments { get; set; } = new();
 }
