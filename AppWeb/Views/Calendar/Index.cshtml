@@ -1,132 +1,245 @@
 @{
-    ViewData["Title"] = "Calendario Google";
-    var now = DateTime.Now;
-    // For the iframe, we'll use a placeholder or a common public one if not provided.
-    // In a real app, this would be a setting or user-specific.
-    var calendarUrl = "https://calendar.google.com/calendar/embed?src=en.italian%23holiday%40group.v.calendar.google.com&ctz=Europe%2FRome";
+    ViewData["Title"] = "Calendario Professionale";
 }
 
-<main class="flex flex-col lg:flex-row h-full overflow-hidden">
-    <!-- Left: Calendar Visualization -->
-    <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
-        <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-black tracking-tight">Calendario Google</h1>
-                <p class="text-xs text-gray-500">Visualizzazione integrata e sincronizzata.</p>
-            </div>
-            <button onclick="syncGoogle()" id="syncBtn" class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-black hover:bg-primary hover:text-white transition-all">
-                <span class="material-symbols-outlined text-sm">sync</span>
-                Sincronizza Ora
-            </button>
+<div class="flex flex-col h-full bg-background-light dark:bg-background-dark">
+    <!-- Top Header / Toolbar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 p-4 lg:p-8 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div class="flex flex-col">
+            <h1 id="calendar-title" class="text-2xl lg:text-3xl font-black tracking-tight text-[#111418] dark:text-white">Caricamento...</h1>
+            <p class="text-[#617589] text-xs font-medium uppercase tracking-widest mt-1">Pianificatore Multi-Sede</p>
         </div>
 
-        <div class="flex-1 relative p-4">
-            <iframe src="@calendarUrl" style="border-width:0" width="100%" height="100%" frameborder="0" scrolling="no" class="rounded-2xl shadow-inner bg-gray-50"></iframe>
+        <div class="flex items-center gap-2 lg:gap-4">
+            <div class="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl flex">
+                <button id="btn-fullcalendar" onclick="toggleViewMode('fullcalendar')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-primary text-white shadow-sm">App</button>
+                <button id="btn-iframe" onclick="toggleViewMode('iframe')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-[#617589]">Google</button>
+            </div>
+
+            <div id="fullcalendar-tools" class="hidden md:flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                <button onclick="changeView('dayGridMonth')" class="view-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all active-view" data-view="dayGridMonth">Mese</button>
+                <button onclick="changeView('timeGridWeek')" class="view-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-view="timeGridWeek">Settimana</button>
+                <button onclick="changeView('listWeek')" class="view-btn px-4 py-1.5 rounded-lg text-xs font-bold transition-all" data-view="listWeek">Agenda</button>
+            </div>
+
+            <button class="lg:hidden p-2 bg-gray-100 dark:bg-gray-800 rounded-xl" data-bs-toggle="offcanvas" data-bs-target="#filterSidebar">
+                <span class="material-symbols-outlined">filter_list</span>
+            </button>
+
+            <button onclick="location.href='/Appointments/Create'" class="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                <span class="material-symbols-outlined text-lg">add</span>
+                Nuovo
+            </button>
         </div>
     </div>
 
-    <!-- Right: Sidebar for Controls and Stats -->
-    <aside class="w-full lg:w-80 bg-gray-50 dark:bg-background-dark flex flex-col shrink-0 overflow-y-auto">
-        <div class="p-6 space-y-8">
-            <section>
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Integrazione</h3>
-                <div id="google-status-card" class="p-4 bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="size-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-blue-600">
-                            <span class="material-symbols-outlined">account_circle</span>
-                        </div>
-                        <div>
-                            <p class="text-xs font-black">Google Account</p>
-                            <p id="connStatus" class="text-[10px] text-gray-400 font-bold uppercase">Verifica in corso...</p>
-                        </div>
-                    </div>
-                    <div id="google-actions" class="space-y-2">
-                        <!-- Dynamic Buttons -->
-                    </div>
-                </div>
-            </section>
+    <div class="flex flex-1 overflow-hidden relative">
+        <!-- Desktop Sidebar Filters -->
+        <aside class="hidden lg:flex w-72 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex-col p-6 overflow-y-auto custom-scrollbar">
+            <partial name="_CalendarFilters" />
+        </aside>
 
-            <section>
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Prossimi Eventi</h3>
-                <div id="upcoming-events" class="space-y-3">
-                    <p class="text-center py-8 text-gray-400 text-xs italic bg-white/50 dark:bg-gray-800/30 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                        Sincronizza per vedere le attività recenti.
-                    </p>
-                </div>
-            </section>
-        </div>
-
-        <div class="mt-auto p-6 border-t border-gray-100 dark:border-gray-800">
-            <div class="p-4 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
-                <p class="text-xs font-black mb-1 uppercase opacity-80 tracking-tighter">Tip</p>
-                <p class="text-[11px] font-medium leading-relaxed">
-                    Le attività sincronizzate appariranno automaticamente nel tuo Kanban e nei report di sede.
-                </p>
+        <!-- Main Calendar Area -->
+        <div class="flex-1 p-4 lg:p-8 overflow-hidden flex flex-col">
+            <div id="calendar-container" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex-1 flex flex-col p-4 overflow-hidden">
+                <div id="calendar" class="flex-1"></div>
+                <iframe id="google-iframe" src="https://calendar.google.com/calendar/embed?src=en.italian%23holiday%40group.v.calendar.google.com&ctz=Europe%2FRome" style="border-width:0; display:none;" width="100%" height="100%" frameborder="0" scrolling="no" class="rounded-xl"></iframe>
             </div>
         </div>
-    </aside>
-</main>
+    </div>
+</div>
+
+<!-- Mobile FAB -->
+<button onclick="location.href='/Appointments/Create'" class="sm:hidden fixed bottom-6 right-6 size-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center z-30 active:scale-95 transition-transform">
+    <span class="material-symbols-outlined text-3xl font-bold">add</span>
+</button>
+
+<!-- Mobile Off-canvas Filters -->
+<div class="offcanvas offcanvas-start bg-white dark:bg-gray-900 w-72" tabindex="-1" id="filterSidebar">
+    <div class="offcanvas-header border-b border-gray-100 dark:border-gray-800 p-6">
+        <h5 class="font-black text-lg">Filtri Calendario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-6">
+        <partial name="_CalendarFilters" />
+    </div>
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css" rel="stylesheet" />
+    <style>
+        .fc { font-family: inherit; border: none !important; }
+        .fc-theme-standard td, .fc-theme-standard th { border: 1px solid rgba(0,0,0,0.05) !important; }
+        .dark .fc-theme-standard td, .dark .fc-theme-standard th { border: 1px solid rgba(255,255,255,0.05) !important; }
+        .fc-header-toolbar { display: none !important; }
+        .fc-daygrid-day-number { font-weight: 800; font-size: 0.8rem; color: #617589; padding: 10px !important; }
+        .fc-col-header-cell-cushion { text-transform: uppercase; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: #adb5bd; padding: 12px !important; }
+        .fc-event { border: none !important; padding: 2px 6px !important; border-radius: 6px !important; font-size: 0.7rem !important; font-weight: 700 !important; cursor: pointer !important; transition: transform 0.1s; }
+        .fc-event:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .active-view { bg-primary text-white !important; box-shadow: 0 4px 12px rgba(43, 140, 238, 0.2); }
+        .view-btn { color: #617589; }
+        .dark .view-btn { color: #adb5bd; }
+        #calendar { height: 100%; }
+
+        .offcanvas { transition: transform 0.3s ease-in-out; }
+    </style>
+}
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script>
-        function refreshGoogleUI() {
-            fetch('/Calendar/GetGoogleStatus')
-                .then(r => r.json())
-                .then(data => {
-                    const statusText = document.getElementById('connStatus');
-                    const actionsArea = document.getElementById('google-actions');
+        let calendar;
+        const currentCalendars = new Set();
 
-                    if (data.isConnected || data.IsConnected) {
-                        statusText.innerText = "Collegato";
-                        statusText.classList.add('text-green-500');
-                        actionsArea.innerHTML = `
-                            <button onclick="syncGoogle()" class="w-full py-2 bg-primary text-white text-[10px] font-black rounded-lg uppercase">Sincronizza</button>
-                            <button onclick="disconnectGoogle()" class="w-full py-2 border border-red-100 text-red-500 text-[10px] font-black rounded-lg uppercase hover:bg-red-50">Scollega</button>
-                        `;
-                    } else {
-                        statusText.innerText = "Non Collegato";
-                        actionsArea.innerHTML = `
-                            <button onclick="connectGoogle()" class="w-full py-2 bg-primary text-white text-[10px] font-black rounded-lg uppercase">Collega Google</button>
-                        `;
-                    }
-                });
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+                locale: 'it',
+                editable: true,
+                droppable: true,
+                height: '100%',
+                dayMaxEvents: true,
+                eventTimeFormat: { hour: '2-digit', minute: '2-digit', meridiem: false },
+                datesSet: function(info) {
+                    document.getElementById('calendar-title').innerText = info.view.title;
+                },
+                eventClick: function(info) {
+                    const id = info.event.extendedProps.dbId || info.event.id;
+                    location.href = info.event.extendedProps.calendarId ? '#' : `/Appointments/Details/${id}`;
+                },
+                eventDrop: function(info) {
+                    updateEvent(info);
+                },
+                eventResize: function(info) {
+                    updateEvent(info);
+                }
+            });
+            calendar.render();
+
+            loadGoogleCalendars();
+        });
+
+        function changeView(viewName) {
+            calendar.changeView(viewName);
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.toggle('active-view', btn.dataset.view === viewName);
+                btn.classList.toggle('bg-primary', btn.dataset.view === viewName);
+                btn.classList.toggle('text-white', btn.dataset.view === viewName);
+            });
         }
 
-        window.syncGoogle = function() {
-            const btn = document.getElementById('syncBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Sincronizzazione...';
-            btn.disabled = true;
-
-            fetch('/Calendar/SyncGoogle', { method: 'POST' })
-                .then(r => r.json())
-                .then(data => {
-                    alert(data.message || data.Message);
-                    location.reload();
-                })
-                .catch(() => {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                });
-        };
-
-        window.connectGoogle = function() {
-            fetch('/Calendar/ConnectGoogle', { method: 'POST' })
-                .then(r => r.json())
-                .then(data => {
-                    alert(data.message || data.Message);
-                    refreshGoogleUI();
-                });
-        };
-
-        window.disconnectGoogle = function() {
-            if (confirm('Scollegare Google Calendar?')) {
-                fetch('/Calendar/DisconnectGoogle', { method: 'POST' }).then(() => refreshGoogleUI());
+        function toggleViewMode(mode) {
+            if (mode === 'iframe') {
+                $('#calendar').hide();
+                $('#google-iframe').show();
+                $('#fullcalendar-tools').hide();
+                $('#btn-iframe').addClass('bg-primary text-white shadow-sm').removeClass('text-[#617589]');
+                $('#btn-fullcalendar').removeClass('bg-primary text-white shadow-sm').addClass('text-[#617589]');
+            } else {
+                $('#calendar').show();
+                $('#google-iframe').hide();
+                $('#fullcalendar-tools').show();
+                $('#btn-fullcalendar').addClass('bg-primary text-white shadow-sm').removeClass('text-[#617589]');
+                $('#btn-iframe').removeClass('bg-primary text-white shadow-sm').addClass('text-[#617589]');
+                calendar.render();
             }
-        };
+        }
 
-        $(document).ready(function() {
-            refreshGoogleUI();
-        });
+        async function loadGoogleCalendars() {
+            try {
+                const response = await fetch('/Calendar/GetGoogleCalendars');
+                const data = await response.json();
+                const container = document.getElementById('calendar-list');
+
+                if (data && data.length) {
+                    container.innerHTML = '';
+                    data.forEach(cal => {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center justify-between group py-1';
+                        div.innerHTML = `
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" value="${cal.id}" class="cal-checkbox rounded border-gray-300 text-primary focus:ring-primary" checked data-color="${cal.backgroundColor || '#2b8cee'}">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary transition-colors">${cal.summary}</span>
+                            </label>
+                            <div class="size-2 rounded-full" style="background-color: ${cal.backgroundColor || '#2b8cee'}"></div>
+                        `;
+                        container.appendChild(div);
+                    });
+
+                    $('.cal-checkbox').on('change', refreshEvents);
+                    refreshEvents();
+                } else {
+                    container.innerHTML = '<p class="text-xs text-gray-400 italic">Nessun calendario Google trovato. Collega l\'account nelle impostazioni.</p>';
+                }
+            } catch (err) {
+                console.error("Error loading calendars", err);
+            }
+        }
+
+        function refreshEvents() {
+            // Remove all existing sources
+            calendar.getEventSources().forEach(src => src.remove());
+
+            // Add local events source
+            calendar.addEventSource({
+                url: '/Calendar/GetEvents',
+                extraParams: function() {
+                    return {
+                        branchId: $('#branchFilter').val(),
+                        projectId: $('#projectFilter').val()
+                    };
+                }
+            });
+
+            // Add selected Google Calendars
+            $('.cal-checkbox:checked').each(function() {
+                const calId = $(this).val();
+                calendar.addEventSource({
+                    id: calId,
+                    url: '/Calendar/GetGoogleEvents',
+                    extraParams: { calendarId: calId },
+                    success: function(events) {
+                        return events.map(e => ({...e, color: $(this).data('color')}));
+                    }
+                });
+            });
+        }
+
+        async function updateEvent(info) {
+            const event = info.event;
+            const data = {
+                summary: event.title,
+                start: { dateTime: event.start.toISOString() },
+                end: { dateTime: (event.end || new Date(event.start.getTime() + 3600000)).toISOString() }
+            };
+
+            const calId = event.extendedProps.calendarId;
+            if (calId) {
+                const success = await fetch(`/Calendar/UpdateGoogleEvent?calendarId=${encodeURIComponent(calId)}&eventId=${event.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!success.ok) {
+                    alert("Conflitto o errore durante l'aggiornamento su Google Calendar.");
+                    info.revert();
+                }
+            } else {
+                // Local event update
+                const dbId = event.extendedProps.dbId;
+                const response = await fetch('/Calendar/UpdateEvent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        type: 'appointment',
+                        dbId: dbId,
+                        newDate: event.start.toISOString()
+                    })
+                });
+                if (!response.ok) info.revert();
+            }
+        }
     </script>
 }

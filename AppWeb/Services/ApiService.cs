@@ -119,9 +119,14 @@ public class ApiService {
     }
 
     public async Task<dynamic> GetGoogleCalendarStatusAsync() => await _httpClient.GetFromJsonAsync<dynamic>("api/googlecalendar/status") ?? new { };
+    public async Task<dynamic> GetGoogleCalendarsAsync() => await _httpClient.GetFromJsonAsync<dynamic>("api/googlecalendar/calendars") ?? new List<object>();
+    public async Task<dynamic> GetGoogleEventsAsync(string calendarId, DateTime start, DateTime end) => await _httpClient.GetFromJsonAsync<dynamic>($"api/googlecalendar/events?calendarId={calendarId}&start={start:O}&end={end:O}") ?? new List<object>();
     public async Task<dynamic> ConnectGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/connect", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
-    public async Task<dynamic> SyncGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/sync", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
     public async Task<dynamic> DisconnectGoogleCalendarAsync() => await (await _httpClient.PostAsync("api/googlecalendar/disconnect", null)).Content.ReadFromJsonAsync<dynamic>() ?? new { };
+    public async Task<bool> UpdateGoogleEventAsync(string calendarId, string eventId, object ev) {
+        var response = await _httpClient.PatchAsJsonAsync($"api/googlecalendar/events/{eventId}?calendarId={calendarId}", ev);
+        return response.IsSuccessStatusCode;
+    }
 
     public async Task<List<AuditLog>> GetAuditLogsAsync() => await _httpClient.GetFromJsonAsync<List<AuditLog>>("api/auditlog") ?? new();
     public async Task CreateAuditLogAsync(AuditLog log) => await _httpClient.PostAsJsonAsync("api/auditlog", log);

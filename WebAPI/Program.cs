@@ -73,6 +73,7 @@ builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IUserBranchRepository, UserBranchRepository>();
 builder.Services.AddScoped<IClientBranchRepository, ClientBranchRepository>();
 builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();
+builder.Services.AddScoped<WebAPI.Services.GoogleCalendarService>();
 
 var app = builder.Build();
 
