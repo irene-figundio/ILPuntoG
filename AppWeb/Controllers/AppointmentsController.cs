@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace AppWeb.Controllers;
 
+[Microsoft.AspNetCore.Authorization.Authorize]
 public class AppointmentsController : Controller
 {
     private readonly ApiService _apiService;
@@ -41,6 +42,7 @@ public class AppointmentsController : Controller
         return RedirectToAction(nameof(Index), new { branchId = appointment.BranchId });
     }
 
+    [HttpPost]
     public async Task<IActionResult> Delete(int id)
     {
         var appt = await _apiService.GetAppointmentAsync(id);

@@ -1,29 +1,277 @@
+Using launch settings from /app/WebAPI/Properties/launchSettings.json...
+Building...
 info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (17ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
-      SELECT COUNT(*) FROM "sqlite_master" WHERE "type" = 'table' AND "rootpage" IS NOT NULL;
+      Executed DbCommand (16ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      PRAGMA journal_mode = 'wal';
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Branches" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Branches" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL,
+          "Address" TEXT NOT NULL,
+          "HexColor" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Clients" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Clients" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL,
+          "Email" TEXT NOT NULL,
+          "PhoneNumber" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Priorities" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Priorities" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL,
+          "LevelId" INTEGER NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Roles" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Roles" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "TaskTypes" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_TaskTypes" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL,
+          "IsBase" INTEGER NOT NULL
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "ClientBranches" (
+          "ClientId" INTEGER NOT NULL,
+          "BranchId" INTEGER NOT NULL,
+          CONSTRAINT "PK_ClientBranches" PRIMARY KEY ("ClientId", "BranchId"),
+          CONSTRAINT "FK_ClientBranches_Branches_BranchId" FOREIGN KEY ("BranchId") REFERENCES "Branches" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_ClientBranches_Clients_ClientId" FOREIGN KEY ("ClientId") REFERENCES "Clients" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Projects" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Projects" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL,
+          "Description" TEXT NOT NULL,
+          "Status" INTEGER NOT NULL,
+          "BranchId" INTEGER NOT NULL,
+          "ClientId" INTEGER NULL,
+          CONSTRAINT "FK_Projects_Branches_BranchId" FOREIGN KEY ("BranchId") REFERENCES "Branches" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_Projects_Clients_ClientId" FOREIGN KEY ("ClientId") REFERENCES "Clients" ("Id")
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Users" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Users" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL,
+          "Email" TEXT NOT NULL,
+          "Username" TEXT NOT NULL,
+          "PasswordHash" TEXT NOT NULL,
+          "RoleId" INTEGER NOT NULL,
+          CONSTRAINT "FK_Users_Roles_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Roles" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Appointments" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Appointments" PRIMARY KEY AUTOINCREMENT,
+          "Description" TEXT NOT NULL,
+          "StartTime" TEXT NOT NULL,
+          "Duration" TEXT NOT NULL,
+          "IsRecurring" INTEGER NOT NULL,
+          "Recurrence" INTEGER NOT NULL,
+          "ProjectId" INTEGER NULL,
+          "BranchId" INTEGER NOT NULL,
+          CONSTRAINT "FK_Appointments_Branches_BranchId" FOREIGN KEY ("BranchId") REFERENCES "Branches" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_Appointments_Projects_ProjectId" FOREIGN KEY ("ProjectId") REFERENCES "Projects" ("Id")
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "TodoTasks" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_TodoTasks" PRIMARY KEY AUTOINCREMENT,
+          "Title" TEXT NOT NULL,
+          "Description" TEXT NOT NULL,
+          "PriorityId" INTEGER NOT NULL,
+          "Deadline" TEXT NOT NULL,
+          "ProcessedAt" TEXT NULL,
+          "Status" INTEGER NOT NULL,
+          "IsRecurring" INTEGER NOT NULL,
+          "Recurrence" INTEGER NOT NULL,
+          "ProjectId" INTEGER NOT NULL,
+          "ClientId" INTEGER NULL,
+          "TaskTypeId" INTEGER NOT NULL,
+          "GitLabRepoUrl" TEXT NULL,
+          CONSTRAINT "FK_TodoTasks_Clients_ClientId" FOREIGN KEY ("ClientId") REFERENCES "Clients" ("Id"),
+          CONSTRAINT "FK_TodoTasks_Priorities_PriorityId" FOREIGN KEY ("PriorityId") REFERENCES "Priorities" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_TodoTasks_Projects_ProjectId" FOREIGN KEY ("ProjectId") REFERENCES "Projects" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_TodoTasks_TaskTypes_TaskTypeId" FOREIGN KEY ("TaskTypeId") REFERENCES "TaskTypes" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "AuditLogs" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_AuditLogs" PRIMARY KEY AUTOINCREMENT,
+          "UserId" INTEGER NULL,
+          "Action" TEXT NOT NULL,
+          "EntityName" TEXT NOT NULL,
+          "EntityId" TEXT NULL,
+          "Timestamp" TEXT NOT NULL,
+          "Details" TEXT NULL,
+          CONSTRAINT "FK_AuditLogs_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id")
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "UserBranches" (
+          "UserId" INTEGER NOT NULL,
+          "BranchId" INTEGER NOT NULL,
+          CONSTRAINT "PK_UserBranches" PRIMARY KEY ("UserId", "BranchId"),
+          CONSTRAINT "FK_UserBranches_Branches_BranchId" FOREIGN KEY ("BranchId") REFERENCES "Branches" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_UserBranches_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "WorkLogs" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_WorkLogs" PRIMARY KEY AUTOINCREMENT,
+          "UserId" INTEGER NOT NULL,
+          "Date" TEXT NOT NULL,
+          "Hours" REAL NOT NULL,
+          "Type" INTEGER NOT NULL,
+          CONSTRAINT "FK_WorkLogs_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "TaskAssignments" (
+          "TodoTaskId" INTEGER NOT NULL,
+          "UserId" INTEGER NOT NULL,
+          CONSTRAINT "PK_TaskAssignments" PRIMARY KEY ("TodoTaskId", "UserId"),
+          CONSTRAINT "FK_TaskAssignments_TodoTasks_TodoTaskId" FOREIGN KEY ("TodoTaskId") REFERENCES "TodoTasks" ("Id") ON DELETE CASCADE,
+          CONSTRAINT "FK_TaskAssignments_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE "Documents" (
+          "Id" INTEGER NOT NULL CONSTRAINT "PK_Documents" PRIMARY KEY AUTOINCREMENT,
+          "Name" TEXT NOT NULL,
+          "FileName" TEXT NOT NULL,
+          "FilePath" TEXT NOT NULL,
+          "ContentType" TEXT NOT NULL,
+          "UploadDate" TEXT NOT NULL,
+          "WorkLogId" INTEGER NULL,
+          "UserId" INTEGER NULL,
+          CONSTRAINT "FK_Documents_Users_UserId" FOREIGN KEY ("UserId") REFERENCES "Users" ("Id"),
+          CONSTRAINT "FK_Documents_WorkLogs_WorkLogId" FOREIGN KEY ("WorkLogId") REFERENCES "WorkLogs" ("Id")
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Priorities" ("Id", "LevelId", "Name")
+      VALUES (1, 1, 'Bassa');
+      SELECT changes();
+
+      INSERT INTO "Priorities" ("Id", "LevelId", "Name")
+      VALUES (2, 2, 'Media');
+      SELECT changes();
+
+      INSERT INTO "Priorities" ("Id", "LevelId", "Name")
+      VALUES (3, 3, 'Alta');
+      SELECT changes();
+
+      INSERT INTO "Priorities" ("Id", "LevelId", "Name")
+      VALUES (4, 4, 'Urgente');
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "Roles" ("Id", "Name")
+      VALUES (1, 'User');
+      SELECT changes();
+
+      INSERT INTO "Roles" ("Id", "Name")
+      VALUES (2, 'Admin');
+      SELECT changes();
+
+      INSERT INTO "Roles" ("Id", "Name")
+      VALUES (3, 'SuperAdmin');
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      INSERT INTO "TaskTypes" ("Id", "IsBase", "Name")
+      VALUES (1, 1, 'Sopralluogo');
+      SELECT changes();
+
+      INSERT INTO "TaskTypes" ("Id", "IsBase", "Name")
+      VALUES (2, 1, 'Riparazione');
+      SELECT changes();
+
+      INSERT INTO "TaskTypes" ("Id", "IsBase", "Name")
+      VALUES (3, 1, 'Installazione');
+      SELECT changes();
+
+      INSERT INTO "TaskTypes" ("Id", "IsBase", "Name")
+      VALUES (4, 1, 'Manutenzione');
+      SELECT changes();
+
+      INSERT INTO "TaskTypes" ("Id", "IsBase", "Name")
+      VALUES (5, 0, 'Sviluppo');
+      SELECT changes();
+
+      INSERT INTO "TaskTypes" ("Id", "IsBase", "Name")
+      VALUES (6, 0, 'Ferie');
+      SELECT changes();
+
+      INSERT INTO "TaskTypes" ("Id", "IsBase", "Name")
+      VALUES (7, 0, 'Malattia');
+      SELECT changes();
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Appointments_BranchId" ON "Appointments" ("BranchId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Appointments_ProjectId" ON "Appointments" ("ProjectId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_AuditLogs_UserId" ON "AuditLogs" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_ClientBranches_BranchId" ON "ClientBranches" ("BranchId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Documents_UserId" ON "Documents" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Documents_WorkLogId" ON "Documents" ("WorkLogId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Projects_BranchId" ON "Projects" ("BranchId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Projects_ClientId" ON "Projects" ("ClientId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TaskAssignments_UserId" ON "TaskAssignments" ("UserId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TodoTasks_ClientId" ON "TodoTasks" ("ClientId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TodoTasks_PriorityId" ON "TodoTasks" ("PriorityId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TodoTasks_ProjectId" ON "TodoTasks" ("ProjectId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_TodoTasks_TaskTypeId" ON "TodoTasks" ("TaskTypeId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_UserBranches_BranchId" ON "UserBranches" ("BranchId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_Users_RoleId" ON "Users" ("RoleId");
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE INDEX "IX_WorkLogs_UserId" ON "WorkLogs" ("UserId");
 info: Microsoft.Hosting.Lifetime[14]
-      Now listening on: http://localhost:5000
+      Now listening on: http://localhost:5281
 info: Microsoft.Hosting.Lifetime[0]
       Application started. Press Ctrl+C to shut down.
 info: Microsoft.Hosting.Lifetime[0]
       Hosting environment: Development
 info: Microsoft.Hosting.Lifetime[0]
       Content root path: /app/WebAPI
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
-      SELECT "a"."Id", "a"."BranchId", "a"."Description", "a"."Duration", "a"."ProjectId", "a"."StartTime"
-      FROM "Appointments" AS "a"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
-      SELECT "b"."Id", "b"."Address", "b"."Name"
-      FROM "Branches" AS "b"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
-      SELECT "t"."Id", "t"."AssignedToUserId", "t"."Deadline", "t"."Description", "t"."Priority", "t"."ProjectId", "t"."Status", "t"."Title"
-      FROM "TodoTasks" AS "t"
-info: Microsoft.EntityFrameworkCore.Database.Command[20101]
-      Executed DbCommand (0ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
-      SELECT "p"."Id", "p"."BranchId", "p"."Description", "p"."Name", "p"."Status"
-      FROM "Projects" AS "p"
-info: Microsoft.Hosting.Lifetime[0]
-      Application is shutting down...

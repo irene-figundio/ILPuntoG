@@ -1,0 +1,75 @@
+@model IEnumerable<Models.WorkLog>
+@{
+    ViewData["Title"] = "Registro Ore e Presenze";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title mb-4"><i class="fas fa-plus-circle text-primary me-2"></i>Nuovo Inserimento</h5>
+                    <form asp-action="Create" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Data</label>
+                            <input type="date" name="Date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ore</label>
+                            <input type="number" step="0.5" name="Hours" class="form-control" value="8" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select name="Type" class="form-select">
+                                <option value="Work">Lavoro Ordinario</option>
+                                <option value="Holiday">Ferie</option>
+                                <option value="Permit">Permesso</option>
+                                <option value="Sickness">Malattia</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-save me-2"></i>Salva
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="card-title mb-4"><i class="fas fa-list text-info me-2"></i>I tuoi ultimi inserimenti</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Ore</th>
+                                    <th>Tipo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.OrderByDescending(x => x.Date).Take(30))
+                                {
+                                    <tr>
+                                        <td>@item.Date.ToShortDateString()</td>
+                                        <td>@item.Hours</td>
+                                        <td>
+                                            @switch(item.Type)
+                                            {
+                                                case Models.WorkLogType.Work: <span class="badge bg-success">Lavoro</span> break;
+                                                case Models.WorkLogType.Holiday: <span class="badge bg-warning text-dark">Ferie</span> break;
+                                                case Models.WorkLogType.Permit: <span class="badge bg-info text-dark">Permesso</span> break;
+                                                case Models.WorkLogType.Sickness: <span class="badge bg-danger">Malattia</span> break;
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,79 @@
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registrazione - Il Punto G</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/5.3.2/cosmo/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .login-header {
+            background-color: #2780e3;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <div class="card login-card shadow-lg">
+                    <div class="login-header">
+                        <i class="fas fa-user-plus fa-3x mb-3"></i>
+                        <h3>Registrazione</h3>
+                        <p class="mb-0">Crea un nuovo account</p>
+                    </div>
+                    <div class="card-body p-4">
+                        @if (ViewBag.Error != null)
+                        {
+                            <div class="alert alert-danger small">@ViewBag.Error</div>
+                        }
+                        <form action="/Account/Register" method="post">
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Nome</label>
+                                <input type="text" name="name" class="form-control" placeholder="Tuo nome" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="email@esempio.com" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Username</label>
+                                <input type="text" name="username" class="form-control" placeholder="Scegli un username" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-uppercase">Password</label>
+                                <input type="password" name="password" class="form-control" placeholder="Scegli una password" required />
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 py-2 fw-bold mt-2">REGISTRATI</button>
+                        </form>
+                        <hr class="my-4">
+                        <div class="text-center small">
+                            Hai già un account? <a href="/Account/Login" class="text-decoration-none fw-bold">Accedi qui</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

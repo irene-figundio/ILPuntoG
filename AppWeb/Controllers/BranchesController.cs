@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace AppWeb.Controllers;
 
+[Microsoft.AspNetCore.Authorization.Authorize]
 public class BranchesController : Controller
 {
     private readonly ApiService _apiService;

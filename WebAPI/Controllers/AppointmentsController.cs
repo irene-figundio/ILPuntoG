@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Repository;
@@ -7,14 +8,17 @@ using System.Threading.Tasks;
 namespace WebAPI.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class AppointmentsController : ControllerBase
 {
     private readonly IAppointmentRepository _repository;
+    private readonly WebAPI.Services.AuditService _auditService;
 
-    public AppointmentsController(IAppointmentRepository repository)
+    public AppointmentsController(IAppointmentRepository repository, WebAPI.Services.AuditService auditService)
     {
         _repository = repository;
+        _auditService = auditService;
     }
 
     [HttpGet]
@@ -43,6 +47,7 @@ public class AppointmentsController : ControllerBase
     {
         await _repository.AddAsync(appointment);
         await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Create", "Appointment", appointment.Id.ToString(), appointment.Description);
         return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, appointment);
     }
 
@@ -56,6 +61,7 @@ public class AppointmentsController : ControllerBase
         }
         _repository.Remove(appointment);
         await _repository.SaveChangesAsync();
+        await _auditService.LogAsync("Delete", "Appointment", appointment.Id.ToString(), appointment.Description);
         return NoContent();
     }
 }

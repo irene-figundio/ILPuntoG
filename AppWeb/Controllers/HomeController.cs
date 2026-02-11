@@ -1,20 +1,38 @@
-using System.Diagnostics;
 using AppWeb.Models;
 using Microsoft.AspNetCore.Mvc;
+using Models;
+using System.Diagnostics;
 
 namespace AppWeb.Controllers
 {
-    public class HomeController : Controller
+    [Microsoft.AspNetCore.Authorization.Authorize]
+public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly AppWeb.Services.ApiService _apiService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, AppWeb.Services.ApiService apiService)
         {
             _logger = logger;
+            _apiService = apiService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            if (!User.Identity?.IsAuthenticated ?? false)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            ViewBag.Stats = await _apiService.GetDashboardStatsAsync();
+            ViewBag.KanbanTasks = await _apiService.GetKanbanTasksAsync();
+            
+
+            if (User.IsInRole(Roles.SuperAdmin))
+            {
+                ViewBag.BranchesSummary = await _apiService.GetBranchesSummaryAsync();
+            }
+
             return View();
         }
 
