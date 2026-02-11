@@ -1,0 +1,123 @@
+@model IEnumerable<Models.Project>
+@{
+    ViewData["Title"] = "Portfolio Progetti";
+}
+
+<div class="p-8 max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight mb-2">Portfolio Progetti Cross-Branch</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Stato in tempo reale delle iniziative attive in tutte le sedi globali.</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="location.href='/Projects/Create?branchId=@ViewBag.BranchId'" class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-primary/20 transition-all">
+                <span class="material-symbols-outlined text-lg">add_circle</span>
+                Crea Nuovo Progetto
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-[#1a202c] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-wrap items-center gap-4 mb-8">
+        <div class="relative flex-1 min-w-[200px]">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl">search</span>
+            <input id="projectSearch" class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary" placeholder="Cerca progetti per nome..." type="text" />
+        </div>
+        <div class="flex gap-3">
+            <form method="get" asp-action="Index" class="flex gap-3">
+                <select name="branchId" class="bg-gray-50 dark:bg-gray-800 border-none rounded-lg text-sm py-2 px-4 focus:ring-2 focus:ring-primary" onchange="this.form.submit()">
+                    <option value="">Tutte le Sedi</option>
+                    @foreach (var branch in (SelectList)ViewBag.Branches)
+                    {
+                        @if (ViewBag.BranchId?.ToString() == branch.Value)
+                        {
+                            <option value="@branch.Value" selected>@branch.Text</option>
+                        }
+                        else
+                        {
+                            <option value="@branch.Value">@branch.Text</option>
+                        }
+                    }
+                </select>
+                <select class="bg-gray-50 dark:bg-gray-800 border-none rounded-lg text-sm py-2 px-4 focus:ring-2 focus:ring-primary">
+                    <option>Tutti gli Stati</option>
+                    <option>In Corso</option>
+                    <option>Completato</option>
+                    <option>In Ritardo</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Project Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="projectGrid">
+        @foreach (var item in Model)
+        {
+            var totalTasks = item.Tasks.Count;
+            var completedTasks = item.Tasks.Count(t => t.Status == Models.TodoStatus.Completed);
+            var progress = totalTasks > 0 ? (completedTasks * 100 / totalTasks) : 0;
+
+            <div class="project-card bg-white dark:bg-[#1a202c] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 hover:shadow-xl hover:-translate-y-1 transition-all group" data-name="@item.Name.ToLower()">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                        @(item.Status == Models.ProjectStatus.Completed ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400" :
+                          item.Status == Models.ProjectStatus.InProgress ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" :
+                          "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400")">
+                        @item.Status
+                    </span>
+                    <div class="flex gap-2">
+                        <button onclick="location.href='/Projects/Details/@item.Id'" class="text-gray-300 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                        <button onclick="location.href='/Projects/Edit/@item.Id'" class="text-gray-300 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button onclick="if(confirm('Sicuro?')) location.href='/Projects/Delete/@item.Id'" class="text-gray-300 hover:text-red-500 transition-colors">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                </div>
+                <h3 class="text-lg font-bold mb-2 group-hover:text-primary transition-colors cursor-pointer" onclick="location.href='/TodoTasks?projectId=@item.Id'">@item.Name</h3>
+                <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs mb-6">
+                    <span class="material-symbols-outlined text-sm">location_on</span>
+                    @(item.Branch?.Name ?? "Sede non assegnata")
+                </div>
+                <div class="space-y-2 mb-8">
+                    <div class="flex justify-between text-xs font-bold">
+                        <span class="text-gray-400">Progresso</span>
+                        <span class="text-primary">@progress%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full rounded-full" style="width: @progress%"></div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="avatar-stack flex">
+                        <!-- Simplified avatars -->
+                        <div class="size-8 rounded-full bg-primary/10 border-2 border-white dark:border-[#1a202c] flex items-center justify-center text-[10px] font-bold text-primary">@item.Tasks.Count</div>
+                        <div class="size-8 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-white dark:border-[#1a202c] -ml-2 flex items-center justify-center text-[10px] font-bold text-gray-500">
+                             <span class="material-symbols-outlined text-sm">task</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Task Totali</p>
+                        <p class="text-xs font-bold">@item.Tasks.Count</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $("#projectSearch").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $("#projectGrid .project-card").filter(function() {
+                    $(this).toggle($(this).data("name").indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+}

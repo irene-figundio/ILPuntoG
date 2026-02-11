@@ -1,0 +1,108 @@
+@model IEnumerable<Models.WorkLog>
+@using Models
+@{
+    ViewData["Title"] = "Registro Ore";
+}
+
+<div class="p-4 lg:p-8 max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight mb-1">Registro Ore</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Inserisci le tue ore lavorative e consulta lo storico.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            @if (User.IsInRole(Roles.SuperAdmin))
+            {
+                <button onclick="location.href='/WorkLogs/Report'" class="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-[#1a202c] border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold hover:shadow-sm transition-all">
+                    <span class="material-symbols-outlined text-lg">analytics</span> Report Sedi
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- New Entry Form -->
+        <div class="lg:col-span-4">
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden sticky top-8">
+                <div class="bg-primary p-6 text-white flex items-center gap-4">
+                    <div class="size-10 bg-white/20 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined">add_task</span>
+                    </div>
+                    <h3 class="font-bold">Nuovo Inserimento</h3>
+                </div>
+                <div class="p-6">
+                    <form asp-action="Create" method="post" class="space-y-5">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Data</label>
+                            <input type="date" name="Date" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ore</label>
+                            <input type="number" step="0.5" name="Hours" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" value="8" required />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipologia</label>
+                            <select name="Type" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all">
+                                <option value="Work">Lavoro Ordinario</option>
+                                <option value="Holiday">Ferie</option>
+                                <option value="Permit">Permesso</option>
+                                <option value="Sickness">Malattia</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary/20 transition-all">
+                            Salva Ore
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="lg:col-span-8">
+            <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                    <h3 class="font-bold text-lg">Storico Recente</h3>
+                    <span class="text-xs text-gray-400 font-bold uppercase">Ultimi 30 giorni</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                                <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Data</th>
+                                <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ore</th>
+                                <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Tipo</th>
+                                <th class="p-4 w-12"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            @foreach (var item in Model.OrderByDescending(x => x.Date).Take(30))
+                            {
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                                    <td class="p-4 text-sm font-bold">@item.Date.ToString("dd MMM yyyy")</td>
+                                    <td class="p-4 text-sm font-black text-primary">@item.Hours.ToString("F1") h</td>
+                                    <td class="p-4">
+                                        <span class="px-2 py-1 rounded text-[10px] font-black uppercase
+                                            @(item.Type == WorkLogType.Work ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700")">
+                                            @item.Type
+                                        </span>
+                                    </td>
+                                    <td class="p-4 text-right">
+                                        <button onclick="if(confirm('Eliminare?')) location.href='/WorkLogs/Delete/@item.Id'" class="text-gray-300 hover:text-red-500 transition-colors">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="p-12 text-center text-gray-400 italic">Nessun inserimento trovato.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

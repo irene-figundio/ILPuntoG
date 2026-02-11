@@ -1,0 +1,74 @@
+@model IEnumerable<Models.WorkLogReportItem>
+@{
+    ViewData["Title"] = "Report Mensile Presenze";
+    int month = ViewBag.Month;
+    int year = ViewBag.Year;
+}
+
+<div class="p-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight mb-1">Report Presenze</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">Riepilogo ore e tipologia di assenze per collaboratore.</p>
+        </div>
+
+        <form method="get" class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2 bg-white dark:bg-[#1a202c] px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <span class="material-symbols-outlined text-gray-400 text-lg">calendar_month</span>
+                <select name="month" class="bg-transparent border-none text-sm font-bold focus:ring-0 p-0 pr-8 cursor-pointer">
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <option value="@i" selected="@(i == month ? "selected" : null)">@System.Globalization.DateTimeFormatInfo.CurrentInfo.GetMonthName(i)</option>
+                    }
+                </select>
+            </div>
+            <div class="flex items-center gap-2 bg-white dark:bg-[#1a202c] px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                <input type="number" name="year" class="bg-transparent border-none text-sm font-bold focus:ring-0 p-0 w-16" value="@year" />
+            </div>
+            <button type="submit" class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg text-sm font-bold shadow-md transition-all">Filtra</button>
+        </form>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800">
+                        <th class="p-4 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Collaboratore</th>
+                        <th class="p-4 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ore Lavoro</th>
+                        <th class="p-4 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ferie</th>
+                        <th class="p-4 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider">Permessi</th>
+                        <th class="p-4 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider">Malattia</th>
+                        <th class="p-4 text-center text-[11px] font-bold text-gray-400 uppercase tracking-wider">Giorni Tot.</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                    @foreach (var item in Model)
+                    {
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                            <td class="p-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
+                                        @(item.UserName?.Length > 0 ? item.UserName.Substring(0,1) : "U")
+                                    </div>
+                                    <span class="text-sm font-bold">@item.UserName</span>
+                                </div>
+                            </td>
+                            <td class="p-4 text-center text-sm font-black text-primary">@item.TotalHours h</td>
+                            <td class="p-4 text-center text-sm font-medium text-orange-500">@item.Ferie h</td>
+                            <td class="p-4 text-center text-sm font-medium text-blue-500">@item.Permessi h</td>
+                            <td class="p-4 text-center text-sm font-medium text-red-500">@item.Malattia h</td>
+                            <td class="p-4 text-center text-sm font-bold">@item.TotalDays</td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="p-12 text-center text-gray-500 italic">Nessun dato trovato per il periodo selezionato.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

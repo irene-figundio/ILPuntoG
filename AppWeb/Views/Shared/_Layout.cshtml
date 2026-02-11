@@ -1,50 +1,192 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html class="light" lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - AppWeb</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/AppWeb.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] - Il Punto G</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b8cee",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #dbe0e6; border-radius: 10px; }
+
+        /* Mobile menu styles */
+        #mobile-sidebar.hidden { display: none; }
+        #mobile-sidebar-overlay.hidden { display: none; }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">AppWeb</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white antialiased">
+    <div class="flex h-screen overflow-hidden relative">
+        <!-- Sidebar Navigation (Desktop) -->
+        <aside class="hidden lg:flex w-64 flex-shrink-0 border-r border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex-col justify-between py-6">
+            <div class="flex flex-col gap-8 px-4">
+                <div class="flex items-center gap-3 px-2">
+                    <div class="bg-primary p-2 rounded-lg text-white">
+                        <span class="material-symbols-outlined block">hub</span>
+                    </div>
+                    <h1 class="text-lg font-extrabold tracking-tight">Il Punto G</h1>
                 </div>
+                <nav class="flex flex-col gap-2">
+                    <partial name="_NavLinks" />
+                </nav>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
+            <div class="px-4 flex flex-col gap-4">
+                <partial name="_UserProfileSide" />
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="mobile-sidebar-overlay" class="hidden fixed inset-0 bg-black/50 z-40 lg:hidden"></div>
+
+        <!-- Mobile Sidebar -->
+        <aside id="mobile-sidebar" class="hidden fixed inset-y-0 left-0 w-64 bg-white dark:bg-background-dark z-50 flex-col py-6 shadow-xl lg:hidden">
+            <div class="flex flex-col gap-8 px-4">
+                <div class="flex items-center justify-between px-2">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-primary p-2 rounded-lg text-white">
+                            <span class="material-symbols-outlined block">hub</span>
+                        </div>
+                        <h1 class="text-lg font-extrabold tracking-tight">Il Punto G</h1>
+                    </div>
+                    <button id="close-mobile-menu" class="p-2 text-gray-500 hover:text-primary">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <nav class="flex flex-col gap-2">
+                    <partial name="_NavLinks" />
+                </nav>
+            </div>
+            <div class="px-4 mt-auto">
+                <partial name="_UserProfileSide" />
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col overflow-hidden w-full">
+            <!-- Top Navbar -->
+            <header class="h-16 border-b border-[#dbe0e6] dark:border-gray-800 bg-white dark:bg-background-dark flex items-center justify-between px-4 lg:px-8 z-10 flex-shrink-0">
+                <div class="flex items-center gap-4 lg:gap-6">
+                    <!-- Mobile Menu Toggle -->
+                    <button id="open-mobile-menu" class="lg:hidden p-2 text-gray-500 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+
+                    <!-- Branch Switcher -->
+                    <div class="relative group hidden sm:block">
+                        <button class="flex items-center gap-2 px-3 py-1.5 border border-[#dbe0e6] dark:border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <span class="material-symbols-outlined text-primary text-lg">domain</span>
+                            <span class="max-w-[100px] truncate">@(ViewBag.CurrentBranchName ?? "Tutte le Sedi")</span>
+                            <span class="material-symbols-outlined text-gray-400">expand_more</span>
+                        </button>
+                    </div>
+
+                    <div class="h-6 w-[1px] bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
+
+                    <!-- Search -->
+                    <div class="flex items-center bg-[#f0f2f4] dark:bg-gray-800 rounded-lg px-3 py-1.5 w-40 sm:w-64">
+                        <span class="material-symbols-outlined text-[#617589] text-xl">search</span>
+                        <input id="global-search" class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-[#617589]" placeholder="Cerca..." type="text" />
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 lg:gap-4">
+                    <button class="p-2 text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <button class="p-2 text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg" onclick="location.href='/Profile'">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
+                    <!-- Small screen avatar -->
+                    <div class="lg:hidden size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                         @(User.Identity?.Name?.Substring(0, Math.Min(1, User.Identity.Name.Length)).ToUpper() ?? "U")
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                @RenderBody()
+            </div>
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - AppWeb - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function() {
+            const $mobileSidebar = $('#mobile-sidebar');
+            const $overlay = $('#mobile-sidebar-overlay');
+
+            $('#open-mobile-menu').on('click', function() {
+                $mobileSidebar.removeClass('hidden').addClass('flex');
+                $overlay.removeClass('hidden');
+            });
+
+            $('#close-mobile-menu, #mobile-sidebar-overlay').on('click', function() {
+                $mobileSidebar.addClass('hidden').removeClass('flex');
+                $overlay.addClass('hidden');
+            });
+
+            // Global search integration
+            $('#global-search').on('keyup', function() {
+                const value = $(this).val().toLowerCase();
+                // Try to find a local search input and sync it
+                const localSearch = $('input[id$="Search"]');
+                if (localSearch.length) {
+                    localSearch.val(value).trigger('keyup');
+                } else {
+                    // Fallback: search for cards or rows
+                    $('.project-card, .staff-card, .appt-card, .client-card, .kanban-card, tr').each(function() {
+                        const text = $(this).text().toLowerCase();
+                        $(this).toggle(text.indexOf(value) > -1);
+                    });
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

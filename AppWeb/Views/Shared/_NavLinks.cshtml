@@ -1,0 +1,37 @@
+@using Models
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/">
+    <span class="material-symbols-outlined">dashboard</span>
+    <span class="text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Projects" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Projects">
+    <span class="material-symbols-outlined">folder</span>
+    <span class="text-sm font-medium">Progetti</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Calendar" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Calendar">
+    <span class="material-symbols-outlined">calendar_today</span>
+    <span class="text-sm font-medium">Calendario</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "TodoTasks" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/TodoTasks">
+    <span class="material-symbols-outlined">checklist</span>
+    <span class="text-sm font-medium">Attività</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Appointments" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Appointments">
+    <span class="material-symbols-outlined">event</span>
+    <span class="text-sm font-medium">Appuntamenti</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Clients" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Clients">
+    <span class="material-symbols-outlined">groups</span>
+    <span class="text-sm font-medium">Clienti</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Branches" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Branches">
+    <span class="material-symbols-outlined">location_on</span>
+    <span class="text-sm font-medium">Sedi</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "WorkLogs" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/WorkLogs">
+    <span class="material-symbols-outlined">history</span>
+    <span class="text-sm font-medium">Presenze</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Staff" ? "bg-primary/10 text-primary font-semibold" : "text-[#617589] hover:bg-gray-100 dark:hover:bg-gray-800") transition-colors" href="/Staff">
+    <span class="material-symbols-outlined">badge</span>
+    <span class="text-sm font-medium">Staff</span>
+</a>

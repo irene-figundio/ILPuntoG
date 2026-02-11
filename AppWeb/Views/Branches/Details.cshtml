@@ -1,0 +1,88 @@
+@model Models.Branch
+@{
+    ViewData["Title"] = "Dettagli Sede: " + Model.Name;
+}
+
+<div class="p-4 lg:p-8 max-w-5xl mx-auto">
+    <div class="flex items-center gap-2 text-gray-500 mb-6 text-sm">
+        <a href="/Branches" class="hover:text-primary transition-colors">Sedi</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-bold text-gray-900 dark:text-white">@Model.Name</span>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 lg:p-10 mb-8">
+        <div class="flex flex-col md:flex-row justify-between gap-8">
+            <div class="flex items-start gap-6">
+                <div class="size-20 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shrink-0">
+                    <span class="material-symbols-outlined text-5xl">location_on</span>
+                </div>
+                <div>
+                    <h1 class="text-3xl lg:text-4xl font-black mb-2">@Model.Name</h1>
+                    <p class="text-gray-500 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">map</span>
+                        @Model.Address
+                    </p>
+                </div>
+            </div>
+            <div class="flex md:flex-col justify-end gap-3 shrink-0">
+                <button onclick="location.href='/Branches/Edit/@Model.Id'" class="bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 py-2.5 px-6 rounded-xl text-sm font-bold transition-all">Modifica Sede</button>
+                <button onclick="location.href='/Projects/Create?branchId=@Model.Id'" class="bg-primary text-white py-2.5 px-6 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all">Nuovo Progetto</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Team Section -->
+        <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <h3 class="font-bold text-lg">Team della Sede</h3>
+                <a href="/Staff?branchId=@Model.Id" class="text-xs font-bold text-primary">Vedi Tutti</a>
+            </div>
+            <div class="p-4 space-y-3">
+                @foreach (var ub in Model.UserBranches)
+                {
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm uppercase">
+                                @(ub.User?.Name?.Substring(0,1) ?? "?")
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold">@(ub.User?.Name ?? "Utente")</p>
+                                <p class="text-[10px] text-gray-500 uppercase font-bold">@(ub.User?.Role?.Name ?? "Membro")</p>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-300">chevron_right</span>
+                    </div>
+                }
+                @if (!Model.UserBranches.Any())
+                {
+                    <p class="text-center py-8 text-gray-400 text-sm italic">Nessun membro assegnato.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Projects Summary Section -->
+        <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <h3 class="font-bold text-lg">Progetti Attivi</h3>
+                <span class="bg-primary/10 text-primary text-xs px-2.5 py-1 rounded-full font-bold">@Model.Projects.Count</span>
+            </div>
+            <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                @foreach (var proj in Model.Projects.Take(5))
+                {
+                    <div class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer" onclick="location.href='/Projects/Details/@proj.Id'">
+                        <div>
+                            <p class="text-sm font-bold">@proj.Name</p>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-bold uppercase">@proj.Status</span>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-300">arrow_forward</span>
+                    </div>
+                }
+                @if (!Model.Projects.Any())
+                {
+                    <p class="text-center py-12 text-gray-400 text-sm italic">Nessun progetto in corso.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

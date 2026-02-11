@@ -1,0 +1,156 @@
+@model Models.TodoTask
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Modifica Attività: " + Model.Title;
+}
+
+<div class="p-4 lg:p-8 max-w-4xl mx-auto">
+    <div class="flex items-center gap-2 text-gray-500 mb-6 text-sm">
+        <a href="/TodoTasks" class="hover:text-primary transition-colors">Attività</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <a href="/TodoTasks/Details/@Model.Id" class="hover:text-primary transition-colors">Dettagli</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="font-bold text-gray-900 dark:text-white">Modifica</span>
+    </div>
+
+    <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+        <div class="bg-primary p-6 text-white flex items-center gap-4">
+            <div class="size-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined">edit_square</span>
+            </div>
+            <div>
+                <h2 class="text-xl font-black">Modifica Attività</h2>
+                <p class="text-white/80 text-xs">Aggiorna lo stato o i dettagli del compito.</p>
+            </div>
+        </div>
+
+        <div class="p-6 lg:p-8">
+            <form asp-action="Edit" method="post" class="space-y-8">
+                <input type="hidden" asp-for="Id" />
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Column 1 -->
+                    <div class="space-y-6">
+                        <div>
+                            <label asp-for="Title" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Titolo</label>
+                            <input asp-for="Title" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" required />
+                        </div>
+
+                        <div>
+                            <label asp-for="Description" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Descrizione</label>
+                            <textarea asp-for="Description" rows="4" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="Status" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Stato</label>
+                                <select asp-for="Status" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" asp-items="Html.GetEnumSelectList<Models.TodoStatus>()"></select>
+                            </div>
+                            <div>
+                                <label asp-for="PriorityId" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Priorità</label>
+                                <select asp-for="PriorityId" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" asp-items="ViewBag.Priorities"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2 -->
+                    <div class="space-y-6">
+                        <div>
+                            <label asp-for="Deadline" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Scadenza</label>
+                            <input asp-for="Deadline" type="date" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" value="@Model.Deadline.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div>
+                            <label asp-for="ProjectId" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Progetto</label>
+                            <select asp-for="ProjectId" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" asp-items="ViewBag.Projects"></select>
+                        </div>
+
+                        <div>
+                            <label asp-for="TaskTypeId" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tipo</label>
+                            <select asp-for="TaskTypeId" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" asp-items="ViewBag.TaskTypes"></select>
+                        </div>
+
+                        <div>
+                            <label asp-for="GitLabRepoUrl" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">GitLab Repo URL (Opzionale)</label>
+                            <input asp-for="GitLabRepoUrl" class="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary transition-all" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6 border-t border-gray-50 dark:border-gray-800">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 text-primary mb-2">
+                            <span class="material-symbols-outlined text-lg">sync</span>
+                            <span class="text-xs font-bold uppercase tracking-wider">Ricorrenza</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" asp-for="IsRecurring" class="size-5 rounded border-gray-300 text-primary focus:ring-primary" id="IsRecurring" />
+                            <label asp-for="IsRecurring" class="text-sm font-medium text-gray-700 dark:text-gray-300">Attività Ricorrente</label>
+                        </div>
+                        <div id="recurrence-options" class="@(Model.IsRecurring ? "" : "hidden") space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+                            <div>
+                                <label asp-for="Recurrence" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Frequenza</label>
+                                <select asp-for="Recurrence" class="w-full px-4 py-2 bg-white dark:bg-gray-900 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary transition-all" asp-items="Html.GetEnumSelectList<Models.TaskRecurrence>()"></select>
+                            </div>
+                            <div>
+                                <label asp-for="RecurrenceRule" class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Regola RRULE</label>
+                                <input asp-for="RecurrenceRule" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border-none rounded-lg text-xs font-mono" placeholder="FREQ=WEEKLY;BYDAY=MO" />
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (ViewBag.GoogleCalendars != null)
+                    {
+                        <div class="space-y-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                            <div class="flex items-center gap-2 text-primary">
+                                <span class="material-symbols-outlined text-lg">sync@if(!string.IsNullOrEmpty(Model.GoogleEventId)){<text>_saved</text>}</span>
+                                <span class="text-xs font-bold uppercase tracking-wider">Sincronizzazione Google Calendar</span>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <div class="relative flex items-center">
+                                    <input type="checkbox" name="SyncWithGoogle" value="true" class="size-5 rounded border-gray-300 text-primary focus:ring-primary" @(string.IsNullOrEmpty(Model.GoogleEventId) ? "" : "checked") />
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Calendario @(string.IsNullOrEmpty(Model.GoogleEventId) ? "di destinazione" : "collegato")</label>
+                                    <select name="GoogleCalendarId" class="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-lg text-xs focus:ring-2 focus:ring-primary transition-all">
+                                        @foreach (var cal in (List<JsonElement>)ViewBag.GoogleCalendars)
+                                        {
+                                            <option value="@cal.GetProperty("id").GetString()">@cal.GetProperty("summary").GetString()</option>
+                                        }
+                                    </select>
+                                    @if (!string.IsNullOrEmpty(Model.GoogleEventId))
+                                    {
+                                        <p class="text-[9px] text-green-500 font-bold mt-1">Sincronizzato: @Model.GoogleEventId</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="pt-6 border-t border-gray-50 dark:border-gray-800 flex items-center justify-end gap-3">
+                    <a href="/TodoTasks/Details/@Model.Id" class="px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">Annulla</a>
+                    <button type="submit" class="bg-primary hover:bg-primary/90 text-white px-10 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 transition-all">
+                        Salva Modifiche
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        document.getElementById('IsRecurring').addEventListener('change', function() {
+            const options = document.getElementById('recurrence-options');
+            if (this.checked) {
+                options.classList.remove('hidden');
+            } else {
+                options.classList.add('hidden');
+            }
+        });
+    </script>
+}

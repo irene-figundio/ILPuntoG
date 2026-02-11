@@ -1,0 +1,15 @@
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <div class="flex items-center gap-3 p-2 border-t border-[#dbe0e6] dark:border-gray-800 pt-6">
+        <div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+            @(User.Identity.Name?.Substring(0, Math.Min(2, User.Identity.Name.Length)).ToUpper() ?? "U")
+        </div>
+        <div class="flex flex-col min-w-0">
+            <p class="text-sm font-bold leading-none mb-1 truncate">@User.Identity.Name</p>
+            <p class="text-xs text-[#617589] truncate">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</p>
+        </div>
+        <a href="/Account/Logout" class="ms-auto text-gray-400 hover:text-red-500 transition-colors" title="Logout">
+            <span class="material-symbols-outlined text-lg">logout</span>
+        </a>
+    </div>
+}

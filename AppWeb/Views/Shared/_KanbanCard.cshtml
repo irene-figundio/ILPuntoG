@@ -1,0 +1,37 @@
+@model Models.TodoTask
+
+<div class="bg-white dark:bg-[#1a202c] p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-primary/50 cursor-pointer group transition-all kanban-card"
+     data-task-id="@Model.Id"
+     onclick="if(!window.isDragging) location.href='@Url.Action("Details", "TodoTasks", new { id = Model.Id })'">
+    <div class="flex justify-between items-start mb-3">
+        <span class="text-[10px] font-bold px-2 py-1 rounded @(Model.Priority?.LevelId >= 4 ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : (Model.Priority?.LevelId == 3 ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"))">
+            @(Model.Priority?.Name ?? "PRIORITY")
+        </span>
+        <div class="flex gap-1">
+             <button onclick="event.stopPropagation(); location.href='/TodoTasks/Edit/@Model.Id'" class="text-gray-300 hover:text-primary transition-colors"><span class="material-symbols-outlined text-sm">edit</span></button>
+             <span class="material-symbols-outlined text-gray-300 group-hover:text-primary transition-colors">drag_indicator</span>
+        </div>
+    </div>
+    <h4 class="font-bold text-sm mb-2 leading-snug">@Model.Title</h4>
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">@Model.Description</p>
+    <div class="flex justify-between items-center">
+        <div class="avatar-stack flex -space-x-2">
+            @foreach (var assign in Model.TaskAssignments.Take(3))
+            {
+                <div class="size-7 rounded-full bg-primary/10 border-2 border-white dark:border-[#1a202c] flex items-center justify-center text-[8px] font-bold text-primary" title="@assign.User?.Name">
+                    @(assign.User?.Name?.Substring(0,1).ToUpper() ?? "?")
+                </div>
+            }
+            @if (Model.TaskAssignments.Count > 3)
+            {
+                <div class="size-7 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-white dark:border-[#1a202c] flex items-center justify-center text-[8px] font-bold text-gray-500">
+                    +@(Model.TaskAssignments.Count - 3)
+                </div>
+            }
+        </div>
+        <div class="flex items-center gap-1 text-gray-400 text-[11px] font-medium">
+            <span class="material-symbols-outlined text-sm">calendar_today</span>
+            @Model.Deadline.ToString("dd MMM")
+        </div>
+    </div>
+</div>
