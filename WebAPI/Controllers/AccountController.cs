@@ -94,7 +94,12 @@ public class AccountController : ControllerBase
 
         // In production, the token would be a secure random GUID or similar stored in a PasswordResetTokens table.
         // For now, we use a slightly more robust check but acknowledge the need for a real token table in a full system.
-        var expectedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Username + user.Email));
+        // In this implementation, we use a hash of user info and a secret key as a stateless token (better than Base64).
+        var secret = _configuration["Jwt:Key"] ?? "default_secret_key";
+        using var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
+        var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(user.Username + user.Email));
+        var expectedToken = Convert.ToBase64String(hash);
+
         if (request.Token != expectedToken) return BadRequest("Invalid or expired token.");
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);

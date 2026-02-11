@@ -19,19 +19,6 @@ public class TodoTasksController : BaseController
     private readonly IUserBranchRepository _userBranchRepository;
     private readonly WebAPI.Services.AuditService _auditService;
 
-    public TodoTasksController(
-        ITodoTaskRepository repository,
-        IProjectRepository projectRepository,
-        IUserBranchRepository userBranchRepository,
-        WebAPI.Services.AuditService auditService,
-        ApplicationDbContext context) : base(context)
-    {
-        _repository = repository;
-        _projectRepository = projectRepository;
-        _userBranchRepository = userBranchRepository;
-        _auditService = auditService;
-    }
-
     [HttpGet]
     public async Task<ActionResult<IEnumerable<TodoTask>>> GetTasks(int? projectId)
     {
@@ -81,6 +68,23 @@ public class TodoTasksController : BaseController
         public bool AssignToAllInBranch { get; set; }
     }
 
+    private readonly WebAPI.Services.GoogleCalendarService _googleService;
+
+    public TodoTasksController(
+        ITodoTaskRepository repository,
+        IProjectRepository projectRepository,
+        IUserBranchRepository userBranchRepository,
+        WebAPI.Services.AuditService auditService,
+        WebAPI.Services.GoogleCalendarService googleService,
+        ApplicationDbContext context) : base(context)
+    {
+        _repository = repository;
+        _projectRepository = projectRepository;
+        _userBranchRepository = userBranchRepository;
+        _auditService = auditService;
+        _googleService = googleService;
+    }
+
     [HttpPost]
     public async Task<ActionResult<TodoTask>> CreateTask(CreateTaskRequest request)
     {
@@ -95,8 +99,32 @@ public class TodoTasksController : BaseController
             return Forbid();
         }
 
+        // Auto-sync "Urgente"
+        var priority = await _context.Priorities.FindAsync(task.PriorityId);
+        if (priority?.Name == "Urgente" && string.IsNullOrEmpty(task.GoogleCalendarId)) {
+            task.GoogleCalendarId = "primary";
+        }
+
         await _repository.AddAsync(task);
         await _repository.SaveChangesAsync();
+
+        // Real Google Sync if CalendarId is set
+        if (!string.IsNullOrEmpty(task.GoogleCalendarId)) {
+            try {
+                var ev = new Google.Apis.Calendar.v3.Data.Event {
+                    Summary = $"[TASK] {task.Title}",
+                    Description = task.Description,
+                    Start = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = task.Deadline.AddHours(-1) },
+                    End = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = task.Deadline }
+                };
+                var created = await _googleService.CreateEventAsync(CurrentUserId, task.GoogleCalendarId, ev);
+                task.GoogleEventId = created.Id;
+                task.SyncStatus = SyncStatus.Synced;
+                await _repository.SaveChangesAsync();
+            } catch (Exception ex) {
+                Console.WriteLine($"[TodoTasksController] Google Sync failed: {ex.Message}");
+            }
+        }
 
         await _auditService.LogAsync("Create", "TodoTask", task.Id.ToString(), $"Title: {task.Title}");
 
@@ -173,6 +201,43 @@ public class TodoTasksController : BaseController
         await _auditService.LogAsync("Update", "TodoTask", task.Id.ToString(), $"Status: {task.Status}");
 
         return NoContent();
+    }
+
+    [HttpPost("update-status")]
+    public async Task<IActionResult> UpdateStatus([FromBody] UpdateStatusRequest request)
+    {
+        var task = await _repository.GetByIdAsync(request.TaskId);
+        if (task == null) return NotFound();
+
+        // Security check
+        if (task.Project != null && !await CanAccessBranchAsync(task.Project.BranchId))
+        {
+            return Forbid();
+        }
+
+        if (CurrentUserRole == Roles.User && !task.TaskAssignments.Any(ta => ta.UserId == CurrentUserId))
+        {
+            return Forbid();
+        }
+
+        task.Status = (TodoStatus)request.StatusId;
+        if (task.Status == TodoStatus.Completed && task.ProcessedAt == null)
+        {
+            task.ProcessedAt = DateTime.Now;
+        }
+
+        _repository.Update(task);
+        await _repository.SaveChangesAsync();
+
+        await _auditService.LogAsync("UpdateStatus", "TodoTask", task.Id.ToString(), $"NewStatus: {task.Status}");
+
+        return Ok(new { Success = true });
+    }
+
+    public class UpdateStatusRequest
+    {
+        public int TaskId { get; set; }
+        public int StatusId { get; set; }
     }
 
     [HttpDelete("{id}")]

@@ -15,26 +15,89 @@ public class CalendarController : BaseController
 {
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly ITodoTaskRepository _todoTaskRepository;
+    private readonly WebAPI.Services.GoogleCalendarService _googleService;
 
-    public CalendarController(IAppointmentRepository appointmentRepository, ITodoTaskRepository todoTaskRepository, ApplicationDbContext context) : base(context)
+    public CalendarController(
+        IAppointmentRepository appointmentRepository,
+        ITodoTaskRepository todoTaskRepository,
+        WebAPI.Services.GoogleCalendarService googleService,
+        ApplicationDbContext context) : base(context)
     {
         _appointmentRepository = appointmentRepository;
         _todoTaskRepository = todoTaskRepository;
+        _googleService = googleService;
+    }
+
+    [HttpGet("timeline")]
+    public async Task<IActionResult> GetTimeline(DateTime start, DateTime end)
+    {
+        var googleEvents = await _googleService.GetEventsAsync(CurrentUserId, "all", start, end);
+        var dbTasks = await _todoTaskRepository.GetAllAsync();
+
+        var allowedIds = await GetUserBranchIdsAsync();
+        dbTasks = dbTasks.Where(t => t.Project != null && allowedIds.Contains(t.Project.BranchId));
+
+        if (CurrentUserRole == Roles.User) {
+            dbTasks = dbTasks.Where(t => t.TaskAssignments.Any(ta => ta.UserId == CurrentUserId));
+        }
+
+        var timeline = new List<object>();
+
+        foreach (var e in googleEvents) {
+            timeline.Add(new {
+                source = "google",
+                title = e.Summary,
+                start = e.Start.DateTimeDateTimeOffset ?? (object)e.Start.Date,
+                location = e.Location,
+                isFocus = e.Summary.Contains("[Focus]")
+            });
+        }
+
+        foreach (var t in dbTasks.Where(t => t.Deadline >= start && t.Deadline <= end)) {
+            timeline.Add(new {
+                source = "db",
+                title = $"[TASK] {t.Title}",
+                start = t.Deadline,
+                location = t.Project?.Name,
+                isFocus = false
+            });
+        }
+
+        return Ok(timeline.OrderBy(x => GetStartTime(x)));
+    }
+
+    private DateTime GetStartTime(object x) {
+        var p = x.GetType().GetProperty("start");
+        var val = p?.GetValue(x);
+        if (val is DateTime dt) return dt;
+        if (val is DateTimeOffset dto) return dto.DateTime;
+        if (val is string s && DateTime.TryParse(s, out var dt2)) return dt2;
+        return DateTime.MinValue;
     }
 
     [HttpGet("events")]
-    public async Task<IActionResult> GetEvents(int? userId, int? branchId, int? projectId, int? clientId)
+    public async Task<IActionResult> GetEvents(DateTime? start, DateTime? end, int? userId, int? branchId, int? projectId, int? clientId)
     {
         var allowedBranchIds = await GetUserBranchIdsAsync();
 
         var appointments = await _appointmentRepository.GetAllAsync();
         var tasks = await _todoTaskRepository.GetAllAsync();
 
+        // Date range filter
+        if (start.HasValue) {
+            appointments = appointments.Where(a => a.StartTime >= start.Value || a.IsRecurring);
+            tasks = tasks.Where(t => t.Deadline >= start.Value || t.IsRecurring);
+        }
+        if (end.HasValue) {
+            appointments = appointments.Where(a => a.StartTime <= end.Value || a.IsRecurring);
+            tasks = tasks.Where(t => t.Deadline <= end.Value || t.IsRecurring);
+        }
+
         // Security filter
         appointments = appointments.Where(a => allowedBranchIds.Contains(a.BranchId));
         tasks = tasks.Where(t => t.Project != null && allowedBranchIds.Contains(t.Project.BranchId));
 
-        // Apply filters
+        // Apply additional filters
         if (branchId.HasValue)
         {
             if (!allowedBranchIds.Contains(branchId.Value)) return Forbid();

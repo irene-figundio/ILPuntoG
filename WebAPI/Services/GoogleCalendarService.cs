@@ -138,6 +138,18 @@ public class GoogleCalendarService
         return await service.Events.Insert(ev, calendarId).ExecuteAsync();
     }
 
+    public async Task<Event> CreateAllDayEventAsync(int userId, string calendarId, string title, DateTime start, DateTime end)
+    {
+        var service = await GetCalendarServiceAsync(userId);
+        var ev = new Event
+        {
+            Summary = title,
+            Start = new EventDateTime { Date = start.ToString("yyyy-MM-dd") },
+            End = new EventDateTime { Date = end.ToString("yyyy-MM-dd") }
+        };
+        return await service.Events.Insert(ev, calendarId).ExecuteAsync();
+    }
+
     public async Task<Event> UpdateEventAsync(int userId, string calendarId, string eventId, Event ev, bool allSeries = false)
     {
         var service = await GetCalendarServiceAsync(userId);
@@ -399,8 +411,9 @@ public class GoogleCalendarService
 
     public async Task<double> GetTeamCapacityAsync(int userId)
     {
-        var start = DateTime.Today;
-        var end = DateTime.Today.AddDays(1);
+        var today = DateTime.Today;
+        var start = today;
+        var end = today.AddDays(1);
         var service = await GetCalendarServiceAsync(userId);
         var calendarIds = await GetUserBranchCalendarsAsync(userId);
 
@@ -418,7 +431,28 @@ public class GoogleCalendarService
             .SelectMany(c => c.Busy)
             .Sum(b => (b.EndDateTimeOffset - b.StartDateTimeOffset)?.TotalHours ?? 0);
 
-        return Math.Min(busyTotalHours / 8.0, 1.0);
+        // Subtract vacations
+        var vacations = await _context.Vacations
+            .Where(v => v.StartDate <= today && v.EndDate >= today)
+            .ToListAsync();
+
+        // Each vacation takes 8 hours from total capacity
+        // Total available hours = 8h * number of team members
+        var teamCount = await _context.UserBranches
+            .Where(ub => calendarIds.Contains(ub.Branch!.GoogleCalendarId ?? ""))
+            .Select(ub => ub.UserId)
+            .Distinct()
+            .CountAsync();
+
+        if (teamCount == 0) teamCount = 1; // Fallback
+
+        double totalAvailableHours = 8.0 * teamCount;
+        double vacationHours = vacations.Count * 8.0;
+
+        double effectiveBusyHours = busyTotalHours + vacationHours;
+        double capacity = Math.Min(effectiveBusyHours / totalAvailableHours, 1.0);
+
+        return capacity;
     }
 
     public async Task SyncTaskShortenedAsync(int userId, string calendarId, string eventId, double newDurationHours)

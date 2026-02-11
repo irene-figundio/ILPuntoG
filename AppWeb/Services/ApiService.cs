@@ -56,11 +56,14 @@ public class ApiService {
     public async Task CreateTaskAsync(TodoTask task, List<int>? selectedUserIds = null, bool assignToAll = false)
         => await _httpClient.PostAsJsonAsync("api/todotasks", new { task, selectedUserIds, assignToAllInBranch = assignToAll });
     public async Task UpdateTaskAsync(int id, TodoTask task) => await _httpClient.PutAsJsonAsync($"api/todotasks/{id}", task);
+    public async Task UpdateTaskStatusAsync(int taskId, int statusId) => await _httpClient.PostAsJsonAsync("api/todotasks/update-status", new { taskId, statusId });
     public async Task DeleteTaskAsync(int id) => await _httpClient.DeleteAsync($"api/todotasks/{id}");
 
-    public async Task<List<object>> GetCalendarEventsAsync(int? userId = null, int? branchId = null, int? projectId = null, int? clientId = null)
+    public async Task<List<object>> GetCalendarEventsAsync(DateTime? start = null, DateTime? end = null, int? userId = null, int? branchId = null, int? projectId = null, int? clientId = null)
     {
         var url = "api/calendar/events?";
+        if (start.HasValue) url += $"start={start.Value:O}&";
+        if (end.HasValue) url += $"end={end.Value:O}&";
         if (userId.HasValue) url += $"userId={userId}&";
         if (branchId.HasValue) url += $"branchId={branchId}&";
         if (projectId.HasValue) url += $"projectId={projectId}&";
@@ -119,7 +122,12 @@ public class ApiService {
     }
 
     public async Task<dynamic> GetGoogleCalendarStatusAsync() => await _httpClient.GetFromJsonAsync<dynamic>("api/googlecalendar/status") ?? new { };
-    public async Task<dynamic> GetGoogleCalendarsAsync() => await _httpClient.GetFromJsonAsync<dynamic>("api/googlecalendar/calendars") ?? new List<object>();
+    public async Task<List<GoogleCalendarDto>> GetGoogleCalendarsAsync() => await _httpClient.GetFromJsonAsync<List<GoogleCalendarDto>>("api/googlecalendar/calendars") ?? new();
+
+    public class GoogleCalendarDto {
+        public string id { get; set; } = string.Empty;
+        public string summary { get; set; } = string.Empty;
+    }
     public async Task<dynamic> GetGoogleEventsAsync(string calendarId, DateTime start, DateTime end) => await _httpClient.GetFromJsonAsync<dynamic>($"api/googlecalendar/events?calendarId={calendarId}&start={start:O}&end={end:O}") ?? new List<object>();
     public async Task<string?> GetGoogleAuthUrlAsync(string redirectUri) {
         var response = await _httpClient.GetFromJsonAsync<System.Text.Json.JsonElement>($"api/googlecalendar/connect?redirectUri={Uri.EscapeDataString(redirectUri)}");
@@ -138,6 +146,9 @@ public class ApiService {
     public async Task<bool> AllocateTasksAsync() {
         var response = await _httpClient.PostAsync("api/googlecalendar/allocate", null);
         return response.IsSuccessStatusCode;
+    }
+    public async Task<List<object>> GetTimelineAsync(DateTime start, DateTime end) {
+        return await _httpClient.GetFromJsonAsync<List<object>>($"api/calendar/timeline?start={start:O}&end={end:O}") ?? new();
     }
     public async Task<double> GetTeamCapacityAsync() {
         try {
@@ -178,4 +189,12 @@ public class ApiService {
         var response = await _httpClient.PostAsJsonAsync("api/users/change-password", new { oldPassword, newPassword });
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<List<Vacation>> GetVacationsAsync() => await _httpClient.GetFromJsonAsync<List<Vacation>>("api/vacations") ?? new();
+    public async Task<Vacation?> AddVacationAsync(Vacation vacation) {
+        var response = await _httpClient.PostAsJsonAsync("api/vacations", vacation);
+        if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Vacation>();
+        return null;
+    }
+    public async Task DeleteVacationAsync(int id) => await _httpClient.DeleteAsync($"api/vacations/{id}");
 }

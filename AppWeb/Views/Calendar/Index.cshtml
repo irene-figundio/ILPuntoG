@@ -213,13 +213,13 @@
             try {
                 const response = await fetch('/Calendar/AllocateTasks', { method: 'POST' });
                 if (response.ok) {
-                    alert("Task allocati con successo su Google Calendar!");
+                    showToast('Successo', 'Task allocati con successo su Google Calendar');
                     refreshEvents();
                 } else {
-                    alert("Errore durante l'allocazione.");
+                    showToast('Errore', 'Errore durante l\'allocazione', 'error');
                 }
             } catch (err) {
-                alert("Errore di connessione.");
+                showToast('Errore', 'Errore di connessione', 'error');
             }
         }
 
@@ -242,7 +242,6 @@
 
         async function updateEvent(info) {
             const event = info.event;
-            // Local event update is enough for now, real Google update would need more DTO mapping
             const response = await fetch('/Calendar/UpdateEvent', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -252,7 +251,12 @@
                     newDate: event.start.toISOString()
                 })
             });
-            if (!response.ok) info.revert();
+            if (!response.ok) {
+                showToast('Errore', 'Conflitto o errore durante l\'aggiornamento', 'error');
+                info.revert();
+            } else {
+                showToast('Successo', 'Evento aggiornato');
+            }
         }
     </script>
 }

@@ -97,6 +97,7 @@ public class DashboardController : BaseController
             ClientCount = b.ClientBranches.Count,
             ProjectCount = b.Projects.Count,
             TaskCount = _context.TodoTasks.Count(t => t.Project != null && t.Project.BranchId == b.Id),
+            CompletedTaskCount = _context.TodoTasks.Count(t => t.Project != null && t.Project.BranchId == b.Id && t.Status == TodoStatus.Completed),
             Team = b.UserBranches.Select(ub => ub.User?.Name ?? "").ToList()
         });
 

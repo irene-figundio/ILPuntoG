@@ -66,6 +66,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserBranch> UserBranches { get; set; }
     public DbSet<ClientBranch> ClientBranches { get; set; }
     public DbSet<TaskAssignment> TaskAssignments { get; set; }
+    public DbSet<Vacation> Vacations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
