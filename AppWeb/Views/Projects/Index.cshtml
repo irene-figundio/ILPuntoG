@@ -1,0 +1,46 @@
+@model IEnumerable<Models.Project>
+
+<div class="container mt-4">
+    <h2>Gestione Progetti</h2>
+
+    <form method="get" asp-action="Index" class="row g-3 align-items-center mb-4">
+        <div class="col-auto">
+            <label class="col-form-label">Filtra per Sede:</label>
+        </div>
+        <div class="col-auto">
+            <select name="branchId" class="form-select" asp-items="ViewBag.Branches" onchange="this.form.submit()">
+                <option value="">Tutte le sedi</option>
+            </select>
+        </div>
+    </form>
+
+    <p>
+        <a asp-action="Create" asp-route-branchId="@ViewBag.BranchId" class="btn btn-primary">Nuovo Progetto</a>
+    </p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Stato</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Status</td>
+                    <td>
+                        <div class="btn-group">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Modifica</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger" onclick="return confirm('Sicuro?')">Elimina</a>
+                            <a asp-controller="TodoTasks" asp-action="Index" asp-route-projectId="@item.Id" class="btn btn-sm btn-info">Attività</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

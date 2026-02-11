@@ -1,0 +1,40 @@
+@model IEnumerable<Models.Appointment>
+
+<div class="container mt-4">
+    <h2>Calendario Appuntamenti</h2>
+
+    <form method="get" asp-action="Index" class="row g-3 align-items-center mb-4">
+        <div class="col-auto">
+            <label class="col-form-label">Filtra per Sede:</label>
+        </div>
+        <div class="col-auto">
+            <select name="branchId" class="form-select" asp-items="ViewBag.Branches" onchange="this.form.submit()">
+                <option value="">Tutte le sedi</option>
+            </select>
+        </div>
+    </form>
+
+    <p>
+        <a asp-action="Create" asp-route-branchId="@ViewBag.BranchId" class="btn btn-primary">Nuovo Appuntamento</a>
+    </p>
+
+    <div class="list-group">
+        @foreach (var item in Model.OrderBy(a => a.StartTime))
+        {
+            <div class="list-group-item list-group-item-action flex-column align-items-start">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">@item.Description</h5>
+                    <small>@item.StartTime.ToString("f")</small>
+                </div>
+                <p class="mb-1">Durata: @item.Duration</p>
+                <div class="d-flex w-100 justify-content-end">
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('Sicuro?')">Elimina</a>
+                </div>
+            </div>
+        }
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">Nessun appuntamento trovato.</div>
+        }
+    </div>
+</div>
