@@ -12,18 +12,14 @@ namespace WebAPI.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class GoogleCalendarController : ControllerBase
+public class GoogleCalendarController : BaseController
 {
     private readonly GoogleCalendarService _googleService;
-    private readonly ApplicationDbContext _context;
 
-    public GoogleCalendarController(GoogleCalendarService googleService, ApplicationDbContext context)
+    public GoogleCalendarController(GoogleCalendarService googleService, ApplicationDbContext context) : base(context)
     {
         _googleService = googleService;
-        _context = context;
     }
-
-    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
     [HttpGet("status")]
     public async Task<IActionResult> GetStatus()
@@ -99,25 +95,28 @@ public class GoogleCalendarController : ControllerBase
         }
     }
 
-    [HttpPost("connect")]
-    public async Task<IActionResult> Connect()
+    [HttpGet("connect")]
+    public IActionResult Connect([FromQuery] string redirectUri)
     {
-        // In a real app, this would redirect to Google OAuth.
-        // For this task, we'll simulate saving a credential.
-        var existing = await _context.GoogleCredentials.FirstOrDefaultAsync(g => g.UserId == CurrentUserId);
-        if (existing == null) {
-            _context.GoogleCredentials.Add(new GoogleCredential {
-                UserId = CurrentUserId,
-                AccessToken = "simulated-access-token",
-                RefreshToken = "simulated-refresh-token",
-                Expiry = DateTime.UtcNow.AddHours(1)
-            });
-        } else {
-            existing.AccessToken = "simulated-access-token";
-            existing.Expiry = DateTime.UtcNow.AddHours(1);
+        var url = _googleService.GetAuthUrl(redirectUri);
+        return Ok(new { AuthUrl = url });
+    }
+
+    [HttpPost("callback")]
+    public async Task<IActionResult> Callback([FromBody] GoogleCallbackRequest request)
+    {
+        try {
+            await _googleService.ExchangeCodeForTokenAsync(CurrentUserId, request.Code, request.RedirectUri);
+            return Ok(new { Success = true });
+        } catch (Exception ex) {
+            return BadRequest(ex.Message);
         }
-        await _context.SaveChangesAsync();
-        return Ok(new { Success = true, Message = "Connesso con successo (simulato) a Google Calendar!" });
+    }
+
+    public class GoogleCallbackRequest
+    {
+        public string Code { get; set; } = string.Empty;
+        public string RedirectUri { get; set; } = string.Empty;
     }
 
     [HttpPost("disconnect")]
@@ -129,5 +128,46 @@ public class GoogleCalendarController : ControllerBase
             await _context.SaveChangesAsync();
         }
         return Ok(new { Success = true });
+    }
+
+    [HttpPost("allocate")]
+    public async Task<IActionResult> Allocate()
+    {
+        try {
+            await _googleService.AllocateTasksAsync(CurrentUserId);
+            return Ok(new { Success = true });
+        } catch (Exception ex) {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("capacity")]
+    public async Task<IActionResult> GetCapacity()
+    {
+        try {
+            var capacity = await _googleService.GetTeamCapacityAsync(CurrentUserId);
+            return Ok(new { Capacity = capacity });
+        } catch (Exception ex) {
+            if (ex.Message.Contains("not connected")) return Ok(new { Capacity = 0.0 });
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("sync-shortened")]
+    public async Task<IActionResult> SyncShortened([FromBody] SyncShortenedRequest request)
+    {
+        try {
+            await _googleService.SyncTaskShortenedAsync(CurrentUserId, request.CalendarId, request.EventId, request.NewDurationHours);
+            return Ok(new { Success = true });
+        } catch (Exception ex) {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    public class SyncShortenedRequest
+    {
+        public string CalendarId { get; set; } = string.Empty;
+        public string EventId { get; set; } = string.Empty;
+        public double NewDurationHours { get; set; }
     }
 }

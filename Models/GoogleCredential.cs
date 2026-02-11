@@ -10,4 +10,5 @@ public class GoogleCredential
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public DateTime Expiry { get; set; }
+    public string? CalendarEmail { get; set; }
 }

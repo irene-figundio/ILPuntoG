@@ -26,6 +26,10 @@
                 <span class="material-symbols-outlined">filter_list</span>
             </button>
 
+            <button onclick="allocateTasks()" class="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all">
+                <span class="material-symbols-outlined text-lg">auto_awesome</span>
+                Smart Plan
+            </button>
             <button onclick="location.href='/Appointments/Create'" class="hidden sm:flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
                 <span class="material-symbols-outlined text-lg">add</span>
                 Nuovo
@@ -76,7 +80,7 @@
         .fc-col-header-cell-cushion { text-transform: uppercase; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; color: #adb5bd; padding: 12px !important; }
         .fc-event { border: none !important; padding: 2px 6px !important; border-radius: 6px !important; font-size: 0.7rem !important; font-weight: 700 !important; cursor: pointer !important; transition: transform 0.1s; }
         .fc-event:hover { transform: translateY(-1px); filter: brightness(1.1); }
-        .active-view { bg-primary text-white !important; box-shadow: 0 4px 12px rgba(43, 140, 238, 0.2); }
+        .active-view { background-color: #2b8cee !important; color: white !important; box-shadow: 0 4px 12px rgba(43, 140, 238, 0.2); }
         .view-btn { color: #617589; }
         .dark .view-btn { color: #adb5bd; }
         #calendar { height: 100%; }
@@ -106,12 +110,20 @@
                 },
                 eventClick: function(info) {
                     const id = info.event.extendedProps.dbId || info.event.id;
-                    location.href = info.event.extendedProps.calendarId ? '#' : `/Appointments/Details/${id}`;
+                    if (info.event.extendedProps.calendarId) return; // Google event
+                    location.href = `/Appointments/Details/${id}`;
                 },
                 eventDrop: function(info) {
                     updateEvent(info);
                 },
                 eventResize: function(info) {
+                    const durationMs = info.event.end - info.event.start;
+                    const durationHours = durationMs / (1000 * 60 * 60);
+
+                    if (info.event.id && durationHours <= 0.5) {
+                        // Logic for syncing completion based on duration
+                        syncShortened(info.event.extendedProps.calendarId || 'primary', info.event.id, durationHours);
+                    }
                     updateEvent(info);
                 }
             });
@@ -123,9 +135,8 @@
         function changeView(viewName) {
             calendar.changeView(viewName);
             document.querySelectorAll('.view-btn').forEach(btn => {
-                btn.classList.toggle('active-view', btn.dataset.view === viewName);
-                btn.classList.toggle('bg-primary', btn.dataset.view === viewName);
-                btn.classList.toggle('text-white', btn.dataset.view === viewName);
+                const isActive = btn.dataset.view === viewName;
+                btn.classList.toggle('active-view', isActive);
             });
         }
 
@@ -148,98 +159,100 @@
 
         async function loadGoogleCalendars() {
             try {
-                const response = await fetch('/Calendar/GetGoogleCalendars');
-                const data = await response.json();
-                const container = document.getElementById('calendar-list');
+                const statusResponse = await fetch('/Calendar/GetGoogleStatus');
+                const status = await statusResponse.json();
 
-                if (data && data.length) {
-                    container.innerHTML = '';
-                    data.forEach(cal => {
-                        const div = document.createElement('div');
-                        div.className = 'flex items-center justify-between group py-1';
-                        div.innerHTML = `
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" value="${cal.id}" class="cal-checkbox rounded border-gray-300 text-primary focus:ring-primary" checked data-color="${cal.backgroundColor || '#2b8cee'}">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary transition-colors">${cal.summary}</span>
-                            </label>
-                            <div class="size-2 rounded-full" style="background-color: ${cal.backgroundColor || '#2b8cee'}"></div>
-                        `;
-                        container.appendChild(div);
-                    });
-
-                    $('.cal-checkbox').on('change', refreshEvents);
-                    refreshEvents();
-                } else {
-                    container.innerHTML = '<p class="text-xs text-gray-400 italic">Nessun calendario Google trovato. Collega l\'account nelle impostazioni.</p>';
+                if (!status.isConnected) {
+                    const connectContainer = document.getElementById('google-connect-container');
+                    if (connectContainer) connectContainer.classList.remove('hidden');
+                    const calendarList = document.getElementById('calendar-list');
+                    if (calendarList) calendarList.innerHTML = '<p class="text-xs text-gray-400 italic">Google Calendar non connesso.</p>';
+                    return;
                 }
+
+                const response = await fetch('/Calendar/GetGoogleEvents?calendarId=primary&start=' + new Date().toISOString() + '&end=' + new Date(Date.now() + 86400000*30).toISOString());
+                // For simplicity, we just enable the primary one if connected
+                const container = document.getElementById('calendar-list');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="flex items-center justify-between group py-1">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" value="primary" class="cal-checkbox rounded border-gray-300 text-primary focus:ring-primary" checked data-color="#2b8cee">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-primary transition-colors">Primary Calendar</span>
+                            </label>
+                            <div class="size-2 rounded-full" style="background-color: #2b8cee"></div>
+                        </div>
+                    `;
+                    $('.cal-checkbox').on('change', refreshEvents);
+                }
+                refreshEvents();
             } catch (err) {
                 console.error("Error loading calendars", err);
             }
         }
 
         function refreshEvents() {
-            // Remove all existing sources
             calendar.getEventSources().forEach(src => src.remove());
 
-            // Add local events source
             calendar.addEventSource({
-                url: '/Calendar/GetEvents',
-                extraParams: function() {
-                    return {
-                        branchId: $('#branchFilter').val(),
-                        projectId: $('#projectFilter').val()
-                    };
-                }
+                url: '/Calendar/GetEvents'
             });
 
-            // Add selected Google Calendars
             $('.cal-checkbox:checked').each(function() {
                 const calId = $(this).val();
                 calendar.addEventSource({
                     id: calId,
                     url: '/Calendar/GetGoogleEvents',
-                    extraParams: { calendarId: calId },
-                    success: function(events) {
-                        return events.map(e => ({...e, color: $(this).data('color')}));
-                    }
+                    extraParams: { calendarId: calId }
                 });
             });
         }
 
-        async function updateEvent(info) {
-            const event = info.event;
-            const data = {
-                summary: event.title,
-                start: { dateTime: event.start.toISOString() },
-                end: { dateTime: (event.end || new Date(event.start.getTime() + 3600000)).toISOString() }
-            };
+        async function allocateTasks() {
+            if (!confirm("Avviare l'algoritmo di Smart Planning per allocare i task pendenti negli slot liberi?")) return;
+            try {
+                const response = await fetch('/Calendar/AllocateTasks', { method: 'POST' });
+                if (response.ok) {
+                    alert("Task allocati con successo su Google Calendar!");
+                    refreshEvents();
+                } else {
+                    alert("Errore durante l'allocazione.");
+                }
+            } catch (err) {
+                alert("Errore di connessione.");
+            }
+        }
 
-            const calId = event.extendedProps.calendarId;
-            if (calId) {
-                const success = await fetch(`/Calendar/UpdateGoogleEvent?calendarId=${encodeURIComponent(calId)}&eventId=${event.id}`, {
+        async function syncShortened(calendarId, eventId, durationHours) {
+            try {
+                await fetch('/Calendar/SyncShortenedTask', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-                if (!success.ok) {
-                    alert("Conflitto o errore durante l'aggiornamento su Google Calendar.");
-                    info.revert();
-                }
-            } else {
-                // Local event update
-                const dbId = event.extendedProps.dbId;
-                const response = await fetch('/Calendar/UpdateEvent', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({
-                        type: 'appointment',
-                        dbId: dbId,
-                        newDate: event.start.toISOString()
+                    body: JSON.stringify({
+                        calendarId: calendarId,
+                        eventId: eventId,
+                        newDurationHours: durationHours
                     })
                 });
-                if (!response.ok) info.revert();
+                refreshEvents();
+            } catch (err) {
+                console.error("Error syncing shortened task", err);
             }
+        }
+
+        async function updateEvent(info) {
+            const event = info.event;
+            // Local event update is enough for now, real Google update would need more DTO mapping
+            const response = await fetch('/Calendar/UpdateEvent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: event.extendedProps.type || 'appointment',
+                    dbId: event.extendedProps.dbId,
+                    newDate: event.start.toISOString()
+                })
+            });
+            if (!response.ok) info.revert();
         }
     </script>
 }

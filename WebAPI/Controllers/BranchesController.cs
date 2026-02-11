@@ -3,19 +3,21 @@ using Microsoft.AspNetCore.Mvc;
 using Models;
 using Repository;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class BranchesController : ControllerBase
+public class BranchesController : BaseController
 {
     private readonly IBranchRepository _repository;
     private readonly WebAPI.Services.AuditService _auditService;
 
-    public BranchesController(IBranchRepository repository, WebAPI.Services.AuditService auditService)
+    public BranchesController(IBranchRepository repository, WebAPI.Services.AuditService auditService, ApplicationDbContext context) : base(context)
     {
         _repository = repository;
         _auditService = auditService;
@@ -24,18 +26,19 @@ public class BranchesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Branch>>> GetBranches()
     {
-        var branches = await _repository.GetAllAsync();
-        return Ok(branches);
+        var allowedIds = await GetUserBranchIdsAsync();
+        var allBranches = await _repository.GetAllAsync();
+        return Ok(allBranches.Where(b => allowedIds.Contains(b.Id)));
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Branch>> GetBranch(int id)
     {
+        if (!await CanAccessBranchAsync(id)) return Forbid();
+
         var branch = await _repository.GetByIdAsync(id);
-        if (branch == null)
-        {
-            return NotFound();
-        }
+        if (branch == null) return NotFound();
+
         return Ok(branch);
     }
 

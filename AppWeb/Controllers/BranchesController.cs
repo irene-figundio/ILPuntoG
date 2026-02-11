@@ -6,19 +6,27 @@ using System.Threading.Tasks;
 namespace AppWeb.Controllers;
 
 [Microsoft.AspNetCore.Authorization.Authorize]
-public class BranchesController : Controller
+public class BranchesController : BaseController
 {
-    private readonly ApiService _apiService;
-
-    public BranchesController(ApiService apiService)
+    public BranchesController(ApiService apiService) : base(apiService)
     {
-        _apiService = apiService;
     }
 
     public async Task<IActionResult> Index()
     {
         var branches = await _apiService.GetBranchesAsync();
         return View(branches);
+    }
+
+    [HttpPost]
+    public IActionResult SetCurrentBranch(int id)
+    {
+        Response.Cookies.Append("SelectedBranchId", id.ToString(), new CookieOptions
+        {
+            Expires = DateTimeOffset.UtcNow.AddDays(30),
+            Path = "/"
+        });
+        return Ok();
     }
 
     public async Task<IActionResult> Details(int id)

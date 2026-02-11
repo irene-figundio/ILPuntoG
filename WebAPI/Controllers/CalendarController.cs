@@ -2,18 +2,21 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using Repository;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class CalendarController : ControllerBase
+public class CalendarController : BaseController
 {
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly ITodoTaskRepository _todoTaskRepository;
 
-    public CalendarController(IAppointmentRepository appointmentRepository, ITodoTaskRepository todoTaskRepository)
+    public CalendarController(IAppointmentRepository appointmentRepository, ITodoTaskRepository todoTaskRepository, ApplicationDbContext context) : base(context)
     {
         _appointmentRepository = appointmentRepository;
         _todoTaskRepository = todoTaskRepository;
@@ -22,12 +25,19 @@ public class CalendarController : ControllerBase
     [HttpGet("events")]
     public async Task<IActionResult> GetEvents(int? userId, int? branchId, int? projectId, int? clientId)
     {
+        var allowedBranchIds = await GetUserBranchIdsAsync();
+
         var appointments = await _appointmentRepository.GetAllAsync();
         var tasks = await _todoTaskRepository.GetAllAsync();
+
+        // Security filter
+        appointments = appointments.Where(a => allowedBranchIds.Contains(a.BranchId));
+        tasks = tasks.Where(t => t.Project != null && allowedBranchIds.Contains(t.Project.BranchId));
 
         // Apply filters
         if (branchId.HasValue)
         {
+            if (!allowedBranchIds.Contains(branchId.Value)) return Forbid();
             appointments = appointments.Where(a => a.BranchId == branchId.Value);
             tasks = tasks.Where(t => t.Project?.BranchId == branchId.Value);
         }
@@ -124,6 +134,9 @@ public class CalendarController : ControllerBase
         {
             var appt = await _appointmentRepository.GetByIdAsync(request.DbId);
             if (appt == null) return NotFound();
+
+            if (!await CanAccessBranchAsync(appt.BranchId)) return Forbid();
+
             appt.StartTime = request.NewDate;
             if (request.Duration.HasValue)
             {
@@ -136,6 +149,9 @@ public class CalendarController : ControllerBase
         {
             var task = await _todoTaskRepository.GetByIdAsync(request.DbId);
             if (task == null) return NotFound();
+
+            if (task.Project != null && !await CanAccessBranchAsync(task.Project.BranchId)) return Forbid();
+
             task.Deadline = request.NewDate;
             if (request.Status.HasValue)
             {

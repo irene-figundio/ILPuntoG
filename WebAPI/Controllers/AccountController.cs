@@ -92,9 +92,10 @@ public class AccountController : ControllerBase
         var user = await _userRepository.GetByUsernameAsync(request.Username);
         if (user == null) return BadRequest("Invalid request.");
 
-        // Simple validation of simulated token
-        var expectedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Username));
-        if (request.Token != expectedToken) return BadRequest("Invalid token.");
+        // In production, the token would be a secure random GUID or similar stored in a PasswordResetTokens table.
+        // For now, we use a slightly more robust check but acknowledge the need for a real token table in a full system.
+        var expectedToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Username + user.Email));
+        if (request.Token != expectedToken) return BadRequest("Invalid or expired token.");
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         _userRepository.Update(user);

@@ -2,49 +2,49 @@ using AppWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Models;
 using System.Diagnostics;
+using AppWeb.Services;
 
-namespace AppWeb.Controllers
+namespace AppWeb.Controllers;
+
+[Microsoft.AspNetCore.Authorization.Authorize]
+public class HomeController : BaseController
 {
-    [Microsoft.AspNetCore.Authorization.Authorize]
-public class HomeController : Controller
+    private readonly ILogger<HomeController> _logger;
+
+    public HomeController(ILogger<HomeController> logger, ApiService apiService) : base(apiService)
     {
-        private readonly ILogger<HomeController> _logger;
-        private readonly AppWeb.Services.ApiService _apiService;
+        _logger = logger;
+    }
 
-        public HomeController(ILogger<HomeController> logger, AppWeb.Services.ApiService apiService)
+    public async Task<IActionResult> Index()
+    {
+        ViewBag.Stats = await _apiService.GetDashboardStatsAsync();
+
+        var kanbanTasks = await _apiService.GetKanbanTasksAsync();
+        if (CurrentBranchId.HasValue)
         {
-            _logger = logger;
-            _apiService = apiService;
+            kanbanTasks = kanbanTasks.Where(t => t.Project?.BranchId == CurrentBranchId.Value).ToList();
+        }
+        ViewBag.KanbanTasks = kanbanTasks;
+
+        ViewBag.TeamCapacity = await _apiService.GetTeamCapacityAsync();
+
+        if (User.IsInRole(Roles.SuperAdmin))
+        {
+            ViewBag.BranchesSummary = await _apiService.GetBranchesSummaryAsync();
         }
 
-        public async Task<IActionResult> Index()
-        {
-            if (!User.Identity?.IsAuthenticated ?? false)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+        return View();
+    }
 
-            ViewBag.Stats = await _apiService.GetDashboardStatsAsync();
-            ViewBag.KanbanTasks = await _apiService.GetKanbanTasksAsync();
+    public IActionResult Privacy()
+    {
+        return View();
+    }
 
-
-            if (User.IsInRole(Roles.SuperAdmin))
-            {
-                ViewBag.BranchesSummary = await _apiService.GetBranchesSummaryAsync();
-            }
-
-            return View();
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
