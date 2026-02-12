@@ -175,6 +175,34 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
+        // Global AJAX configuration to include JWT
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                const token = localStorage.getItem('jwtToken');
+                if (token) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                }
+            }
+        });
+
+        // Also for native fetch
+        const originalFetch = window.fetch;
+        window.fetch = function() {
+            let [resource, config] = arguments;
+            if (config === undefined) config = {};
+            if (config.headers === undefined) config.headers = {};
+
+            const token = localStorage.getItem('jwtToken');
+            if (token) {
+                if (config.headers instanceof Headers) {
+                    config.headers.set('Authorization', 'Bearer ' + token);
+                } else {
+                    config.headers['Authorization'] = 'Bearer ' + token;
+                }
+            }
+            return originalFetch(resource, config);
+        };
+
         function showToast(title, message, type = 'success') {
             toastr.options = {
                 "closeButton": true,
@@ -195,6 +223,15 @@
         }
 
         $(document).ready(function() {
+            // Sync JWT from query string to localStorage if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                localStorage.setItem('jwtToken', token);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             const $mobileSidebar = $('#mobile-sidebar');
             const $overlay = $('#mobile-sidebar-overlay');
 

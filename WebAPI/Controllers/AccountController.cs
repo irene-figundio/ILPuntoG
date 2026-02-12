@@ -16,12 +16,14 @@ public class AccountController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _configuration;
     private readonly WebAPI.Services.AuditService _auditService;
+    private readonly WebAPI.Services.GoogleCalendarService _googleService;
 
-    public AccountController(IUserRepository userRepository, IConfiguration configuration, WebAPI.Services.AuditService auditService)
+    public AccountController(IUserRepository userRepository, IConfiguration configuration, WebAPI.Services.AuditService auditService, WebAPI.Services.GoogleCalendarService googleService)
     {
         _userRepository = userRepository;
         _configuration = configuration;
         _auditService = auditService;
+        _googleService = googleService;
     }
 
     [HttpPost("register")]
@@ -66,6 +68,48 @@ public class AccountController : ControllerBase
         return Ok(new { token, user = new { user.Id, user.Username, user.Name, user.Email } });
     }
 
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        try
+        {
+            var email = await _googleService.ExchangeCodeForEmailAsync(request.Code, request.RedirectUri);
+            var user = await _userRepository.GetByUsernameAsync(email); // Using email as username
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Name = email.Split('@')[0],
+                    Email = email,
+                    Username = email,
+                    PasswordHash = "GOOGLE_SSO",
+                    RoleId = 1
+                };
+                await _userRepository.AddAsync(user);
+                await _userRepository.SaveChangesAsync();
+            }
+
+            // Persist Google Tokens
+            await _googleService.ExchangeCodeForTokenAsync(user.Id, request.Code, request.RedirectUri);
+
+            var token = GenerateJwtToken(user);
+            await _auditService.LogAsync("GoogleLogin", "User", user.Id.ToString(), $"Email: {user.Email}", user.Id);
+
+            return Ok(new { token, user = new { user.Id, user.Username, user.Name, user.Email } });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    public class GoogleLoginRequest
+    {
+        public string Code { get; set; } = string.Empty;
+        public string RedirectUri { get; set; } = string.Empty;
+    }
+
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
     {
@@ -73,13 +117,8 @@ public class AccountController : ControllerBase
         var user = users.FirstOrDefault(u => u.Email == request.Email);
         if (user == null)
         {
-            // Don't reveal if user exists or not for security, but for this task we'll be helpful
             return BadRequest("User with this email not found.");
         }
-
-        // In a real app, generate a unique token and send an email.
-        // We do NOT return the token to the client for security reasons.
-        // var token = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.Username));
 
         await _auditService.LogAsync("ForgotPassword", "User", user.Id.ToString(), $"Email: {user.Email}", user.Id);
 
@@ -92,9 +131,6 @@ public class AccountController : ControllerBase
         var user = await _userRepository.GetByUsernameAsync(request.Username);
         if (user == null) return BadRequest("Invalid request.");
 
-        // In production, the token would be a secure random GUID or similar stored in a PasswordResetTokens table.
-        // For now, we use a slightly more robust check but acknowledge the need for a real token table in a full system.
-        // In this implementation, we use a hash of user info and a secret key as a stateless token (better than Base64).
         var secret = _configuration["Jwt:Key"] ?? "default_secret_key";
         using var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
         var hash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(user.Username + user.Email));

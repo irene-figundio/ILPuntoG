@@ -18,26 +18,60 @@ public class AccountController : Controller
         return View();
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetGoogleAuthUrl(string redirectUri)
+    {
+        var url = await _apiService.GetGoogleAuthUrlAsync(redirectUri);
+        return Json(new { authUrl = url });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GoogleCallback(string code)
+    {
+        var redirectUri = Url.Action("GoogleCallback", "Account", null, Request.Scheme) ?? string.Empty;
+        var response = await _apiService.GoogleSsoLoginAsync(code, redirectUri);
+
+        if (response != null && response.Token != null)
+        {
+            await SignInWithToken(response.Token);
+            return RedirectToAction("Index", "Home");
+        }
+
+        return RedirectToAction("Login", new { error = "Google SSO failed." });
+    }
+
+    private async Task SignInWithToken(string token)
+    {
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var claims = jwtToken.Claims.ToList();
+        claims.Add(new System.Security.Claims.Claim("Token", token));
+
+        var identity = new System.Security.Claims.ClaimsIdentity(claims, "Cookies");
+        var principal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+        await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(HttpContext, "Cookies", principal);
+
+        Response.Cookies.Append("JwtToken", token, new CookieOptions { HttpOnly = true, Secure = Request.IsHttps });
+    }
+
     [HttpPost]
     public async Task<IActionResult> Login(string username, string password)
     {
         var token = await _apiService.LoginAsync(username, password);
         if (token != null)
         {
-            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadJwtToken(token);
-            var claims = jwtToken.Claims.ToList();
-            claims.Add(new System.Security.Claims.Claim("Token", token));
+            await SignInWithToken(token);
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers["Accept"].ToString().Contains("application/json"))
+            {
+                return Ok(new { token });
+            }
+            return RedirectToAction("Index", "Home", new { token }); // Pass token in query for localStorage sync if needed
+        }
 
-            var identity = new System.Security.Claims.ClaimsIdentity(claims, "Cookies");
-            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
-
-            await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(HttpContext, "Cookies", principal);
-
-            // Also keep the token cookie for ApiService
-            Response.Cookies.Append("JwtToken", token, new CookieOptions { HttpOnly = true, Secure = Request.IsHttps });
-
-            return RedirectToAction("Index", "Home");
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Unauthorized();
         }
 
         ViewBag.Error = "Invalid login attempt.";

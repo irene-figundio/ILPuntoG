@@ -25,6 +25,16 @@ public class ApiService {
         return null;
     }
 
+    public async Task<LoginResponse?> GoogleSsoLoginAsync(string code, string redirectUri)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/account/google-login", new { code, redirectUri });
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadFromJsonAsync<LoginResponse>();
+        }
+        return null;
+    }
+
     public async Task<bool> RegisterAsync(string name, string email, string username, string password)
     {
         var response = await _httpClient.PostAsJsonAsync("api/account/register", new { name, email, username, password });

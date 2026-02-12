@@ -200,13 +200,35 @@ public class GoogleCalendarService
         return url;
     }
 
+    public async Task<string> ExchangeCodeForEmailAsync(string code, string redirectUri)
+    {
+        var clientId = _configuration["Google:ClientId"];
+        var clientSecret = _configuration["Google:ClientSecret"];
+        var initializer = new GoogleAuthorizationCodeFlow.Initializer
+        {
+            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
+            Scopes = new[] { "https://www.googleapis.com/auth/userinfo.email", "openid" }
+        };
+        var flow = new GoogleAuthorizationCodeFlow(initializer);
+        var token = await flow.ExchangeCodeForTokenAsync("user", code, redirectUri, System.Threading.CancellationToken.None);
+
+        var service = new Google.Apis.Oauth2.v2.Oauth2Service(new BaseClientService.Initializer
+        {
+            HttpClientInitializer = new UserCredential(flow, "user", token),
+            ApplicationName = "Il Punto G"
+        });
+        var userInfo = await service.Userinfo.Get().ExecuteAsync();
+        return userInfo.Email;
+    }
+
     public async Task ExchangeCodeForTokenAsync(int userId, string code, string redirectUri)
     {
         var clientId = _configuration["Google:ClientId"];
         var clientSecret = _configuration["Google:ClientSecret"];
         var initializer = new GoogleAuthorizationCodeFlow.Initializer
         {
-            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret }
+            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
+            Scopes = new[] { CalendarService.Scope.Calendar, CalendarService.Scope.CalendarEvents, "https://www.googleapis.com/auth/userinfo.email", "openid" }
         };
         var flow = new GoogleAuthorizationCodeFlow(initializer);
         var token = await flow.ExchangeCodeForTokenAsync(userId.ToString(), code, redirectUri, System.Threading.CancellationToken.None);
