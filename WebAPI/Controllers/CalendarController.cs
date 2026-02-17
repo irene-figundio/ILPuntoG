@@ -63,6 +63,7 @@ public class CalendarController : BaseController
             });
         }
 
+        if (!timeline.Any()) return NoRecordsFound();
         return Ok(timeline.OrderBy(x => GetStartTime(x)));
     }
 
@@ -161,6 +162,7 @@ public class CalendarController : BaseController
             }
         }
 
+        if (!events.Any()) return NoRecordsFound();
         return Ok(events);
     }
 

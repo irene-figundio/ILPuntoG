@@ -36,12 +36,14 @@ public class UsersController : BaseController
             .Distinct()
             .ToListAsync();
 
+        if (!users.Any()) return NoRecordsFound();
         return Ok(users);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<User>> GetUser(int id)
     {
+        if (id == 0) return NoRecordsFound();
         if (!IsSuperAdmin && id != CurrentUserId)
         {
             // Check if they share a branch
@@ -54,7 +56,7 @@ public class UsersController : BaseController
         }
 
         var user = await _repository.GetByIdAsync(id);
-        if (user == null) return NotFound();
+        if (user == null) return NoRecordsFound();
         return Ok(user);
     }
 
@@ -83,7 +85,7 @@ public class UsersController : BaseController
     public async Task<IActionResult> DeleteUser(int id)
     {
         var user = await _repository.GetByIdAsync(id);
-        if (user == null) return NotFound();
+        if (user == null) return NoRecordsFound();
         _repository.Remove(user);
         await _repository.SaveChangesAsync();
         return NoContent();

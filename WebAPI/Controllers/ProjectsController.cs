@@ -26,24 +26,31 @@ public class ProjectsController : BaseController
     {
         var allowedBranchIds = await GetUserBranchIdsAsync();
 
+        IEnumerable<Project> projects;
+
         if (branchId.HasValue)
         {
             if (!allowedBranchIds.Contains(branchId.Value))
             {
                 return Forbid();
             }
-            return Ok(await _repository.GetProjectsByBranchAsync(branchId.Value));
+            projects = await _repository.GetProjectsByBranchAsync(branchId.Value);
+        }
+        else
+        {
+            var allProjects = await _repository.GetAllAsync();
+            projects = allProjects.Where(p => allowedBranchIds.Contains(p.BranchId));
         }
 
-        var allProjects = await _repository.GetAllAsync();
-        return Ok(allProjects.Where(p => allowedBranchIds.Contains(p.BranchId)));
+        if (!projects.Any()) return NoRecordsFound();
+        return Ok(projects);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Project>> GetProject(int id)
     {
         var project = await _repository.GetByIdAsync(id);
-        if (project == null) return NotFound();
+        if (project == null) return NoRecordsFound();
 
         if (!await CanAccessBranchAsync(project.BranchId))
         {

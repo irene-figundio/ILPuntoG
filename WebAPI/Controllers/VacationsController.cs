@@ -23,10 +23,13 @@ public class VacationsController : BaseController
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Vacation>>> GetVacations()
     {
-        return await _context.Vacations
+        var vacations = await _context.Vacations
             .Include(v => v.User)
             .OrderByDescending(v => v.StartDate)
             .ToListAsync();
+
+        if (!vacations.Any()) return NoRecordsFound();
+        return Ok(vacations);
     }
 
     [HttpPost]

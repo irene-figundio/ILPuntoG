@@ -6,33 +6,44 @@ using Repository;
 namespace WebAPI.Controllers;
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
-public class TaskTypesController : ControllerBase
+public class TaskTypesController : BaseController
 {
     private readonly ITaskTypeRepository _repository;
-    public TaskTypesController(ITaskTypeRepository repository) { _repository = repository; }
-    [HttpGet] public async Task<ActionResult<IEnumerable<TaskType>>> Get() => Ok(await _repository.GetAllAsync());
+    public TaskTypesController(ITaskTypeRepository repository, ApplicationDbContext context) : base(context) { _repository = repository; }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<TaskType>>> Get()
+    {
+        var items = await _repository.GetAllAsync();
+        if (!items.Any()) return NoRecordsFound();
+        return Ok(items);
+    }
 }
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
-public class PrioritiesController : ControllerBase
+public class PrioritiesController : BaseController
 {
     private readonly IPriorityRepository _repository;
-    public PrioritiesController(IPriorityRepository repository) { _repository = repository; }
-    [HttpGet] public async Task<ActionResult<IEnumerable<Priority>>> Get() => Ok(await _repository.GetAllAsync());
+    public PrioritiesController(IPriorityRepository repository, ApplicationDbContext context) : base(context) { _repository = repository; }
+
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Priority>>> Get()
+    {
+        var items = await _repository.GetAllAsync();
+        if (!items.Any()) return NoRecordsFound();
+        return Ok(items);
+    }
 }
 
 [ApiController]
-[Authorize]
 [Route("api/[controller]")]
-public class WorkLogsController : ControllerBase
+public class WorkLogsController : BaseController
 {
     private readonly IWorkLogRepository _repository;
     private readonly WebAPI.Services.AuditService _auditService;
-    public WorkLogsController(IWorkLogRepository repository, WebAPI.Services.AuditService auditService)
+    public WorkLogsController(IWorkLogRepository repository, WebAPI.Services.AuditService auditService, ApplicationDbContext context) : base(context)
     {
         _repository = repository;
         _auditService = auditService;
@@ -45,7 +56,10 @@ public class WorkLogsController : ControllerBase
         if (userId.HasValue) logs = logs.Where(l => l.UserId == userId.Value);
         if (month.HasValue) logs = logs.Where(l => l.Date.Month == month.Value);
         if (year.HasValue) logs = logs.Where(l => l.Date.Year == year.Value);
-        return Ok(logs.OrderByDescending(l => l.Date));
+
+        var results = logs.OrderByDescending(l => l.Date);
+        if (!results.Any()) return NoRecordsFound();
+        return Ok(results);
     }
 
     [HttpGet("report")]
@@ -91,7 +105,7 @@ public class WorkLogsController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var log = await _repository.GetByIdAsync(id);
-        if (log == null) return NotFound();
+        if (log == null) return NoRecordsFound();
         _repository.Remove(log);
         await _repository.SaveChangesAsync();
         await _auditService.LogAsync("Delete", "WorkLog", id.ToString(), $"Type: {log.Type}");

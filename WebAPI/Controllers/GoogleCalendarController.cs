@@ -33,6 +33,7 @@ public class GoogleCalendarController : BaseController
     {
         try {
             var calendars = await _googleService.GetUserCalendarsAsync(CurrentUserId);
+            if (!calendars.Any()) return NoRecordsFound();
             return Ok(calendars);
         } catch (Exception ex) {
             return BadRequest(ex.Message);
@@ -44,6 +45,7 @@ public class GoogleCalendarController : BaseController
     {
         try {
             var events = await _googleService.GetEventsAsync(CurrentUserId, calendarId, start, end);
+            if (!events.Any()) return NoRecordsFound();
             return Ok(events.Select(e => new {
                 id = e.Id,
                 title = e.Summary,
@@ -106,7 +108,8 @@ public class GoogleCalendarController : BaseController
     public async Task<IActionResult> Callback([FromBody] GoogleCallbackRequest request)
     {
         try {
-            await _googleService.ExchangeCodeForTokenAsync(CurrentUserId, request.Code, request.RedirectUri);
+            var (email, tokens) = await _googleService.ExchangeCodeAsync(request.Code, request.RedirectUri);
+            await _googleService.PersistGoogleTokensAsync(CurrentUserId, tokens, email);
             return Ok(new { Success = true });
         } catch (Exception ex) {
             return BadRequest(ex.Message);

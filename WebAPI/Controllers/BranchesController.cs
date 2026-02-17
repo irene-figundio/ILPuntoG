@@ -28,7 +28,9 @@ public class BranchesController : BaseController
     {
         var allowedIds = await GetUserBranchIdsAsync();
         var allBranches = await _repository.GetAllAsync();
-        return Ok(allBranches.Where(b => allowedIds.Contains(b.Id)));
+        var results = allBranches.Where(b => allowedIds.Contains(b.Id));
+        if (!results.Any()) return NoRecordsFound();
+        return Ok(results);
     }
 
     [HttpGet("{id}")]
@@ -37,7 +39,7 @@ public class BranchesController : BaseController
         if (!await CanAccessBranchAsync(id)) return Forbid();
 
         var branch = await _repository.GetByIdAsync(id);
-        if (branch == null) return NotFound();
+        if (branch == null) return NoRecordsFound();
 
         return Ok(branch);
     }

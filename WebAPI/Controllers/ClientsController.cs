@@ -35,6 +35,7 @@ public class ClientsController : BaseController
             clients = clients.Where(c => c.ClientBranches.Any(cb => cb.BranchId == branchId.Value));
         }
 
+        if (!clients.Any()) return NoRecordsFound();
         return Ok(clients);
     }
 
@@ -42,7 +43,7 @@ public class ClientsController : BaseController
     public async Task<IActionResult> GetById(int id)
     {
         var client = await _clientRepo.GetByIdAsync(id);
-        if (client == null) return NotFound();
+        if (client == null) return NoRecordsFound();
 
         var allowedIds = await GetUserBranchIdsAsync();
         if (!client.ClientBranches.Any(cb => allowedIds.Contains(cb.BranchId)))

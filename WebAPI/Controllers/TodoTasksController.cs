@@ -39,6 +39,7 @@ public class TodoTasksController : BaseController
             tasks = tasks.Where(t => t.ProjectId == projectId.Value);
         }
 
+        if (!tasks.Any()) return NoRecordsFound();
         return Ok(tasks);
     }
 
@@ -46,7 +47,7 @@ public class TodoTasksController : BaseController
     public async Task<ActionResult<TodoTask>> GetTask(int id)
     {
         var task = await _repository.GetByIdAsync(id);
-        if (task == null) return NotFound();
+        if (task == null) return NoRecordsFound();
 
         if (task.Project != null && !await CanAccessBranchAsync(task.Project.BranchId))
         {

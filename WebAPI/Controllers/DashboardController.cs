@@ -76,6 +76,7 @@ public class DashboardController : BaseController
             tasks = tasks.Where(t => t.TaskAssignments.Any(ta => ta.UserId == CurrentUserId));
         }
 
+        if (!tasks.Any()) return NoRecordsFound();
         return Ok(tasks.OrderBy(t => t.Deadline));
     }
 
@@ -99,8 +100,9 @@ public class DashboardController : BaseController
             TaskCount = _context.TodoTasks.Count(t => t.Project != null && t.Project.BranchId == b.Id),
             CompletedTaskCount = _context.TodoTasks.Count(t => t.Project != null && t.Project.BranchId == b.Id && t.Status == TodoStatus.Completed),
             Team = b.UserBranches.Select(ub => ub.User?.Name ?? "").ToList()
-        });
+        }).ToList();
 
+        if (!summary.Any()) return NoRecordsFound();
         return Ok(summary);
     }
 }

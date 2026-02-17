@@ -19,9 +19,9 @@ public class CalendarController : BaseController
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetEvents(DateTime start, DateTime end)
+    public async Task<IActionResult> GetEvents(DateTime start, DateTime end, int? branchId, int? projectId)
     {
-        var events = await _apiService.GetCalendarEventsAsync(start: start, end: end, branchId: CurrentBranchId);
+        var events = await _apiService.GetCalendarEventsAsync(start: start, end: end, branchId: branchId ?? CurrentBranchId, projectId: projectId);
         return Json(events);
     }
 
@@ -37,6 +37,13 @@ public class CalendarController : BaseController
     {
         var events = await _apiService.GetGoogleEventsAsync(calendarId, start, end);
         return Json(events);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetGoogleCalendars()
+    {
+        var calendars = await _apiService.GetGoogleCalendarsAsync();
+        return Json(calendars);
     }
 
     [HttpGet]

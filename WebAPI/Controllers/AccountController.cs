@@ -73,7 +73,7 @@ public class AccountController : ControllerBase
     {
         try
         {
-            var email = await _googleService.ExchangeCodeForEmailAsync(request.Code, request.RedirectUri);
+            var (email, tokens) = await _googleService.ExchangeCodeAsync(request.Code, request.RedirectUri);
             var user = await _userRepository.GetByUsernameAsync(email); // Using email as username
 
             if (user == null)
@@ -91,7 +91,7 @@ public class AccountController : ControllerBase
             }
 
             // Persist Google Tokens
-            await _googleService.ExchangeCodeForTokenAsync(user.Id, request.Code, request.RedirectUri);
+            await _googleService.PersistGoogleTokensAsync(user.Id, tokens, email);
 
             var token = GenerateJwtToken(user);
             await _auditService.LogAsync("GoogleLogin", "User", user.Id.ToString(), $"Email: {user.Email}", user.Id);

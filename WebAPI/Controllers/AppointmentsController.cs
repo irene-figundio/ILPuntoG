@@ -27,21 +27,28 @@ public class AppointmentsController : BaseController
     {
         var allowedIds = await GetUserBranchIdsAsync();
 
+        IEnumerable<Appointment> appts;
+
         if (branchId.HasValue)
         {
             if (!allowedIds.Contains(branchId.Value)) return Forbid();
-            return Ok(await _repository.GetAppointmentsByBranchAsync(branchId.Value));
+            appts = await _repository.GetAppointmentsByBranchAsync(branchId.Value);
+        }
+        else
+        {
+            var all = await _repository.GetAllAsync();
+            appts = all.Where(a => allowedIds.Contains(a.BranchId));
         }
 
-        var all = await _repository.GetAllAsync();
-        return Ok(all.Where(a => allowedIds.Contains(a.BranchId)));
+        if (!appts.Any()) return NoRecordsFound();
+        return Ok(appts);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Appointment>> GetAppointment(int id)
     {
         var appointment = await _repository.GetByIdAsync(id);
-        if (appointment == null) return NotFound();
+        if (appointment == null) return NoRecordsFound();
 
         if (!await CanAccessBranchAsync(appointment.BranchId)) return Forbid();
 

@@ -40,4 +40,6 @@ public abstract class BaseController : ControllerBase
         if (IsSuperAdmin) return true;
         return await _context.UserBranches.AnyAsync(ub => ub.UserId == CurrentUserId && ub.BranchId == branchId);
     }
+
+    protected ActionResult NoRecordsFound() => NotFound(new { Message = "No Records found" });
 }

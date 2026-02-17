@@ -200,28 +200,7 @@ public class GoogleCalendarService
         return url;
     }
 
-    public async Task<string> ExchangeCodeForEmailAsync(string code, string redirectUri)
-    {
-        var clientId = _configuration["Google:ClientId"];
-        var clientSecret = _configuration["Google:ClientSecret"];
-        var initializer = new GoogleAuthorizationCodeFlow.Initializer
-        {
-            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
-            Scopes = new[] { "https://www.googleapis.com/auth/userinfo.email", "openid" }
-        };
-        var flow = new GoogleAuthorizationCodeFlow(initializer);
-        var token = await flow.ExchangeCodeForTokenAsync("user", code, redirectUri, System.Threading.CancellationToken.None);
-
-        var service = new Google.Apis.Oauth2.v2.Oauth2Service(new BaseClientService.Initializer
-        {
-            HttpClientInitializer = new UserCredential(flow, "user", token),
-            ApplicationName = "Il Punto G"
-        });
-        var userInfo = await service.Userinfo.Get().ExecuteAsync();
-        return userInfo.Email;
-    }
-
-    public async Task ExchangeCodeForTokenAsync(int userId, string code, string redirectUri)
+    public async Task<(string Email, TokenResponse Tokens)> ExchangeCodeAsync(string code, string redirectUri)
     {
         var clientId = _configuration["Google:ClientId"];
         var clientSecret = _configuration["Google:ClientSecret"];
@@ -231,8 +210,20 @@ public class GoogleCalendarService
             Scopes = new[] { CalendarService.Scope.Calendar, CalendarService.Scope.CalendarEvents, "https://www.googleapis.com/auth/userinfo.email", "openid" }
         };
         var flow = new GoogleAuthorizationCodeFlow(initializer);
-        var token = await flow.ExchangeCodeForTokenAsync(userId.ToString(), code, redirectUri, System.Threading.CancellationToken.None);
+        var token = await flow.ExchangeCodeForTokenAsync("user", code, redirectUri, System.Threading.CancellationToken.None);
 
+        var oauthService = new Google.Apis.Oauth2.v2.Oauth2Service(new BaseClientService.Initializer
+        {
+            HttpClientInitializer = new UserCredential(flow, "user", token),
+            ApplicationName = "Il Punto G"
+        });
+        var userInfo = await oauthService.Userinfo.Get().ExecuteAsync();
+
+        return (userInfo.Email, token);
+    }
+
+    public async Task PersistGoogleTokensAsync(int userId, TokenResponse token, string? email = null)
+    {
         var cred = await _context.GoogleCredentials.FirstOrDefaultAsync(g => g.UserId == userId);
         if (cred == null)
         {
@@ -244,13 +235,23 @@ public class GoogleCalendarService
         cred.RefreshToken = token.RefreshToken ?? cred.RefreshToken;
         cred.Expiry = DateTime.UtcNow.AddSeconds(token.ExpiresInSeconds ?? 3600);
 
-        var service = new CalendarService(new BaseClientService.Initializer
+        if (string.IsNullOrEmpty(cred.CalendarEmail))
         {
-            HttpClientInitializer = new UserCredential(flow, userId.ToString(), token),
-            ApplicationName = "Il Punto G"
-        });
-        var calendar = await service.Calendars.Get("primary").ExecuteAsync();
-        cred.CalendarEmail = calendar.Id;
+            var clientId = _configuration["Google:ClientId"];
+            var clientSecret = _configuration["Google:ClientSecret"];
+            var initializer = new GoogleAuthorizationCodeFlow.Initializer
+            {
+                ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret }
+            };
+            var flow = new GoogleAuthorizationCodeFlow(initializer);
+            var service = new CalendarService(new BaseClientService.Initializer
+            {
+                HttpClientInitializer = new UserCredential(flow, userId.ToString(), token),
+                ApplicationName = "Il Punto G"
+            });
+            var calendar = await service.Calendars.Get("primary").ExecuteAsync();
+            cred.CalendarEmail = calendar.Id;
+        }
 
         await _context.SaveChangesAsync();
     }

@@ -155,55 +155,10 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="~/js/Kanban.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const columns = ['pending-tasks', 'inprogress-tasks', 'completed-tasks'];
-            const statusMap = {
-                'pending-tasks': 0,    // Pending
-                'inprogress-tasks': 1, // InProgress
-                'completed-tasks': 2   // Completed
-            };
-
-            columns.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    Sortable.create(el, {
-                        group: 'kanban',
-                        animation: 150,
-                        ghostClass: 'bg-primary/5',
-                        onStart: function() { window.isDragging = true; },
-                        onEnd: function (evt) {
-                            setTimeout(() => { window.isDragging = false; }, 100);
-                            const taskId = evt.item.getAttribute('data-task-id');
-                            const newStatus = statusMap[evt.to.id];
-
-                            if (taskId && newStatus !== undefined) {
-                                updateTaskStatus(taskId, newStatus);
-                            }
-                        }
-                    });
-                }
-            });
-
-            function updateTaskStatus(taskId, status) {
-                const data = new URLSearchParams();
-                data.append('taskId', taskId);
-                data.append('statusId', status);
-
-                fetch('/TodoTasks/UpdateStatus', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: data
-                }).then(response => {
-                    if (!response.ok) {
-                        alert('Errore durante l\'aggiornamento dello stato');
-                        location.reload();
-                    } else {
-                        // Optional: Show Toast
-                        showToast('Successo', 'Stato task aggiornato');
-                    }
-                });
-            }
+            Kanban.init(['pending-tasks', 'inprogress-tasks', 'completed-tasks']);
         });
     </script>
 }
