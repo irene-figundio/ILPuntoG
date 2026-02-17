@@ -3,25 +3,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Models;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace AppWeb.Controllers;
 
 [Microsoft.AspNetCore.Authorization.Authorize]
-public class ProjectsController : Controller
+public class ProjectsController : BaseController
 {
-    private readonly ApiService _apiService;
-
-    public ProjectsController(ApiService apiService)
+    public ProjectsController(ApiService apiService) : base(apiService)
     {
-        _apiService = apiService;
     }
 
-    public async Task<IActionResult> Index(int? branchId)
+    public async Task<IActionResult> Index()
     {
-        var projects = await _apiService.GetProjectsAsync(branchId);
-        ViewBag.BranchId = branchId;
-        var branches = await _apiService.GetBranchesAsync();
-        ViewBag.Branches = new SelectList(branches, "Id", "Name", branchId);
+        var projects = await _apiService.GetProjectsAsync(CurrentBranchId);
         return View(projects);
     }
 
@@ -32,18 +27,18 @@ public class ProjectsController : Controller
         return View(project);
     }
 
-    public async Task<IActionResult> Create(int? branchId)
+    public async Task<IActionResult> Create()
     {
         var branches = await _apiService.GetBranchesAsync();
-        ViewBag.Branches = new SelectList(branches, "Id", "Name", branchId);
-        return View(new Project { BranchId = branchId ?? 0 });
+        ViewBag.Branches = new SelectList(branches, "Id", "Name", CurrentBranchId);
+        return View(new Project { BranchId = CurrentBranchId ?? 0 });
     }
 
     [HttpPost]
     public async Task<IActionResult> Create(Project project)
     {
         await _apiService.CreateProjectAsync(project);
-        return RedirectToAction(nameof(Index), new { branchId = project.BranchId });
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Edit(int id)
@@ -59,7 +54,7 @@ public class ProjectsController : Controller
     public async Task<IActionResult> Edit(int id, Project project)
     {
         await _apiService.UpdateProjectAsync(id, project);
-        return RedirectToAction(nameof(Index), new { branchId = project.BranchId });
+        return RedirectToAction(nameof(Index));
     }
 
     public async Task<IActionResult> Delete(int id)
@@ -67,6 +62,6 @@ public class ProjectsController : Controller
         var project = await _apiService.GetProjectAsync(id);
         if (project == null) return NotFound();
         await _apiService.DeleteProjectAsync(id);
-        return RedirectToAction(nameof(Index), new { branchId = project.BranchId });
+        return RedirectToAction(nameof(Index));
     }
 }

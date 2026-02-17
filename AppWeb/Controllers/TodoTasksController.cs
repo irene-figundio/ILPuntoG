@@ -43,6 +43,13 @@ public class TodoTasksController : Controller
         var clients = await _apiService.GetClientsAsync();
         ViewBag.Clients = new SelectList(clients, "Id", "Name");
 
+        try {
+            var calendars = await _apiService.GetGoogleCalendarsAsync();
+            ViewBag.GoogleCalendars = new SelectList(calendars, "id", "summary");
+        } catch {
+            ViewBag.GoogleCalendars = null;
+        }
+
         return View(new TodoTask { ProjectId = projectId ?? 0, Status = TodoStatus.Pending, Deadline = DateTime.Now.AddDays(1) });
     }
 
@@ -71,6 +78,13 @@ public class TodoTasksController : Controller
     {
         await _apiService.UpdateTaskAsync(id, task);
         return RedirectToAction(nameof(Index), new { projectId = task.ProjectId });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateStatus(int taskId, int statusId)
+    {
+        await _apiService.UpdateTaskStatusAsync(taskId, statusId);
+        return Ok();
     }
 
     public async Task<IActionResult> Delete(int id)

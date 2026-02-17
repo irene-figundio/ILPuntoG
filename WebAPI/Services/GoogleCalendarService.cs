@@ -75,13 +75,54 @@ public class GoogleCalendarService
     public async Task<IEnumerable<Event>> GetEventsAsync(int userId, string calendarId, DateTime start, DateTime end)
     {
         var service = await GetCalendarServiceAsync(userId);
-        var request = service.Events.List(calendarId);
-        request.TimeMinDateTimeOffset = start;
-        request.TimeMaxDateTimeOffset = end;
-        request.SingleEvents = true; // Expand recurrences
-        request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
-        var events = await request.ExecuteAsync();
-        return events.Items;
+        var calendarsToSearch = new List<string>();
+
+        if (string.IsNullOrEmpty(calendarId) || calendarId == "all")
+        {
+            var calendarList = await service.CalendarList.List().ExecuteAsync();
+
+            // Priority 1: "Irene Graldev"
+            var irene = calendarList.Items.FirstOrDefault(c => c.Summary.Contains("Irene Graldev", StringComparison.OrdinalIgnoreCase));
+            if (irene != null) calendarsToSearch.Add(irene.Id);
+
+            // Priority 2: Primary and Branch calendars
+            var branchCalendars = await GetUserBranchCalendarsAsync(userId);
+            calendarsToSearch.AddRange(branchCalendars);
+
+            // Distinct in case primary is already there
+            calendarsToSearch = calendarsToSearch.Distinct().ToList();
+        }
+        else
+        {
+            calendarsToSearch.Add(calendarId);
+        }
+
+        var allEvents = new List<Event>();
+        foreach (var calId in calendarsToSearch)
+        {
+            try
+            {
+                var request = service.Events.List(calId);
+                // Fix: Start of today in UTC to avoid timezone issues
+                var timeMin = DateTime.UtcNow.Date;
+                request.TimeMinDateTimeOffset = timeMin > start ? timeMin : start;
+                request.TimeMaxDateTimeOffset = end;
+                request.SingleEvents = true;
+                request.OrderBy = EventsResource.ListRequest.OrderByEnum.StartTime;
+
+                var result = await request.ExecuteAsync();
+                var items = result.Items ?? new List<Event>();
+
+                Console.WriteLine($"[GoogleCalendarService] Found {items.Count} events in calendar {calId}");
+                allEvents.AddRange(items);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GoogleCalendarService] Error fetching events from {calId}: {ex.Message}");
+            }
+        }
+
+        return allEvents.OrderBy(e => e.Start.DateTimeDateTimeOffset?.DateTime ?? (DateTime.TryParse(e.Start.Date, out var dt) ? dt : DateTime.MinValue));
     }
 
     public async Task<Event> CreateEventAsync(int userId, string calendarId, Event ev)
@@ -94,6 +135,18 @@ public class GoogleCalendarService
             throw new Exception("Conflict detected");
         }
 
+        return await service.Events.Insert(ev, calendarId).ExecuteAsync();
+    }
+
+    public async Task<Event> CreateAllDayEventAsync(int userId, string calendarId, string title, DateTime start, DateTime end)
+    {
+        var service = await GetCalendarServiceAsync(userId);
+        var ev = new Event
+        {
+            Summary = title,
+            Start = new EventDateTime { Date = start.ToString("yyyy-MM-dd") },
+            End = new EventDateTime { Date = end.ToString("yyyy-MM-dd") }
+        };
         return await service.Events.Insert(ev, calendarId).ExecuteAsync();
     }
 
@@ -130,5 +183,318 @@ public class GoogleCalendarService
         };
         var response = await service.Freebusy.Query(request).ExecuteAsync();
         return response.Calendars[calendarId].Busy.Any();
+    }
+
+    public string GetAuthUrl(string redirectUri)
+    {
+        var clientId = _configuration["Google:ClientId"];
+        var initializer = new GoogleAuthorizationCodeFlow.Initializer
+        {
+            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = _configuration["Google:ClientSecret"] },
+            Scopes = new[] { CalendarService.Scope.Calendar, CalendarService.Scope.CalendarEvents }
+        };
+        var flow = new GoogleAuthorizationCodeFlow(initializer);
+        var request = flow.CreateAuthorizationCodeRequest(redirectUri);
+        var url = request.Build().ToString();
+        url += "&access_type=offline&prompt=consent";
+        return url;
+    }
+
+    public async Task<string> ExchangeCodeForEmailAsync(string code, string redirectUri)
+    {
+        var clientId = _configuration["Google:ClientId"];
+        var clientSecret = _configuration["Google:ClientSecret"];
+        var initializer = new GoogleAuthorizationCodeFlow.Initializer
+        {
+            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
+            Scopes = new[] { "https://www.googleapis.com/auth/userinfo.email", "openid" }
+        };
+        var flow = new GoogleAuthorizationCodeFlow(initializer);
+        var token = await flow.ExchangeCodeForTokenAsync("user", code, redirectUri, System.Threading.CancellationToken.None);
+
+        var service = new Google.Apis.Oauth2.v2.Oauth2Service(new BaseClientService.Initializer
+        {
+            HttpClientInitializer = new UserCredential(flow, "user", token),
+            ApplicationName = "Il Punto G"
+        });
+        var userInfo = await service.Userinfo.Get().ExecuteAsync();
+        return userInfo.Email;
+    }
+
+    public async Task ExchangeCodeForTokenAsync(int userId, string code, string redirectUri)
+    {
+        var clientId = _configuration["Google:ClientId"];
+        var clientSecret = _configuration["Google:ClientSecret"];
+        var initializer = new GoogleAuthorizationCodeFlow.Initializer
+        {
+            ClientSecrets = new ClientSecrets { ClientId = clientId, ClientSecret = clientSecret },
+            Scopes = new[] { CalendarService.Scope.Calendar, CalendarService.Scope.CalendarEvents, "https://www.googleapis.com/auth/userinfo.email", "openid" }
+        };
+        var flow = new GoogleAuthorizationCodeFlow(initializer);
+        var token = await flow.ExchangeCodeForTokenAsync(userId.ToString(), code, redirectUri, System.Threading.CancellationToken.None);
+
+        var cred = await _context.GoogleCredentials.FirstOrDefaultAsync(g => g.UserId == userId);
+        if (cred == null)
+        {
+            cred = new global::Models.GoogleCredential { UserId = userId };
+            _context.GoogleCredentials.Add(cred);
+        }
+
+        cred.AccessToken = token.AccessToken;
+        cred.RefreshToken = token.RefreshToken ?? cred.RefreshToken;
+        cred.Expiry = DateTime.UtcNow.AddSeconds(token.ExpiresInSeconds ?? 3600);
+
+        var service = new CalendarService(new BaseClientService.Initializer
+        {
+            HttpClientInitializer = new UserCredential(flow, userId.ToString(), token),
+            ApplicationName = "Il Punto G"
+        });
+        var calendar = await service.Calendars.Get("primary").ExecuteAsync();
+        cred.CalendarEmail = calendar.Id;
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<List<string>> GetUserBranchCalendarsAsync(int userId)
+    {
+        var branchIds = await _context.UserBranches
+            .Where(ub => ub.UserId == userId)
+            .Include(ub => ub.Branch)
+            .Select(ub => ub.Branch!.GoogleCalendarId)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .ToListAsync();
+
+        var userCred = await _context.GoogleCredentials.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (userCred != null && !string.IsNullOrEmpty(userCred.CalendarEmail))
+        {
+            branchIds.Add("primary");
+
+            try
+            {
+                var service = await GetCalendarServiceAsync(userId);
+                var calendarList = await service.CalendarList.List().ExecuteAsync();
+                var irene = calendarList.Items.FirstOrDefault(c => c.Summary.Contains("Irene Graldev", StringComparison.OrdinalIgnoreCase));
+                if (irene != null) branchIds.Add(irene.Id);
+            }
+            catch {}
+        }
+
+        return branchIds.Where(id => id != null).Select(id => id!).Distinct().ToList();
+    }
+
+    public async Task<List<(DateTime Start, DateTime End)>> GetFreeSlotsAsync(int userId, DateTime start, DateTime end)
+    {
+        var service = await GetCalendarServiceAsync(userId);
+        var calendarIds = await GetUserBranchCalendarsAsync(userId);
+
+        if (!calendarIds.Any()) return new List<(DateTime Start, DateTime End)> { (start, end) };
+
+        var request = new FreeBusyRequest
+        {
+            TimeMinDateTimeOffset = start,
+            TimeMaxDateTimeOffset = end,
+            Items = calendarIds.Select(id => new FreeBusyRequestItem { Id = id }).ToList()
+        };
+
+        var response = await service.Freebusy.Query(request).ExecuteAsync();
+
+        var busyPeriods = response.Calendars.Values
+            .SelectMany(c => c.Busy)
+            .Select(b => (Start: b.StartDateTimeOffset?.DateTime ?? DateTime.MinValue, End: b.EndDateTimeOffset?.DateTime ?? DateTime.MinValue))
+            .OrderBy(b => b.Start)
+            .ToList();
+
+        // Include non-working hours as "busy"
+        var nonWorkingBusy = new List<(DateTime Start, DateTime End)>();
+        for (var date = start.Date; date <= end.Date; date = date.AddDays(1))
+        {
+            // Weekend: all day busy
+            if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+            {
+                nonWorkingBusy.Add((date, date.AddDays(1)));
+            }
+            else
+            {
+                // Working day: busy before 9 and after 18
+                nonWorkingBusy.Add((date, date.AddHours(9)));
+                nonWorkingBusy.Add((date.AddHours(18), date.AddDays(1)));
+            }
+        }
+
+        var allBusy = busyPeriods.Concat(nonWorkingBusy).OrderBy(b => b.Start).ToList();
+
+        var mergedBusy = new List<(DateTime Start, DateTime End)>();
+        if (allBusy.Any())
+        {
+            var current = (allBusy[0].Start, allBusy[0].End);
+            for (int i = 1; i < allBusy.Count; i++)
+            {
+                if (allBusy[i].Start <= current.End)
+                {
+                    if (allBusy[i].End > current.End)
+                        current.End = allBusy[i].End;
+                }
+                else
+                {
+                    mergedBusy.Add(current);
+                    current = (allBusy[i].Start, allBusy[i].End);
+                }
+            }
+            mergedBusy.Add(current);
+        }
+
+        var freeSlots = new List<(DateTime Start, DateTime End)>();
+        DateTime currentStart = start;
+
+        foreach (var busy in mergedBusy)
+        {
+            if (busy.Start > currentStart)
+            {
+                freeSlots.Add((currentStart, busy.Start));
+            }
+            if (busy.End > currentStart)
+                currentStart = busy.End;
+        }
+
+        if (currentStart < end)
+        {
+            freeSlots.Add((currentStart, end));
+        }
+
+        // Final filter: ensure slots are at least 30 mins and within range
+        return freeSlots
+            .Where(s => (s.End - s.Start).TotalMinutes >= 30)
+            .Where(s => s.Start >= start && s.End <= end)
+            .ToList();
+    }
+
+    public async Task AllocateTasksAsync(int userId)
+    {
+        var tasks = await _context.TodoTasks
+            .Include(t => t.Priority)
+            .Where(t => t.Status != TodoStatus.Completed && t.SyncStatus == SyncStatus.NotSynced)
+            .OrderByDescending(t => t.Priority!.LevelId)
+            .ThenBy(t => t.Deadline)
+            .ToListAsync();
+
+        if (!tasks.Any()) return;
+
+        var start = DateTime.Now;
+        var end = DateTime.Now.AddDays(14);
+        var freeSlots = await GetFreeSlotsAsync(userId, start, end);
+
+        foreach (var task in tasks)
+        {
+            double durationHours = task.Priority?.Name switch
+            {
+                "Urgente" => 8,
+                "Media" => 4,
+                "Bassa" => 2,
+                _ => 1
+            };
+
+            var limitDate = task.Deadline.AddDays(7);
+            var suitableSlotIndex = freeSlots.FindIndex(s =>
+                (s.End - s.Start).TotalHours >= durationHours &&
+                s.Start < limitDate &&
+                s.Start >= DateTime.Now);
+
+            if (suitableSlotIndex != -1)
+            {
+                var suitableSlot = freeSlots[suitableSlotIndex];
+                var ev = new Event
+                {
+                    Summary = $"[Focus] {task.Title}",
+                    Description = task.Description,
+                    Start = new EventDateTime { DateTimeDateTimeOffset = suitableSlot.Start },
+                    End = new EventDateTime { DateTimeDateTimeOffset = suitableSlot.Start.AddHours(durationHours) }
+                };
+
+                var created = await CreateEventAsync(userId, "primary", ev);
+
+                task.GoogleEventId = created.Id;
+                task.GoogleCalendarId = "primary";
+                task.SyncStatus = SyncStatus.Synced;
+
+                var newStart = suitableSlot.Start.AddHours(durationHours);
+                if (newStart < suitableSlot.End)
+                {
+                    freeSlots[suitableSlotIndex] = (newStart, suitableSlot.End);
+                }
+                else
+                {
+                    freeSlots.RemoveAt(suitableSlotIndex);
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<double> GetTeamCapacityAsync(int userId)
+    {
+        var today = DateTime.Today;
+        var start = today;
+        var end = today.AddDays(1);
+        var service = await GetCalendarServiceAsync(userId);
+        var calendarIds = await GetUserBranchCalendarsAsync(userId);
+
+        if (!calendarIds.Any()) return 0;
+
+        var request = new FreeBusyRequest
+        {
+            TimeMinDateTimeOffset = start,
+            TimeMaxDateTimeOffset = end,
+            Items = calendarIds.Select(id => new FreeBusyRequestItem { Id = id }).ToList()
+        };
+
+        var response = await service.Freebusy.Query(request).ExecuteAsync();
+        var busyTotalHours = response.Calendars.Values
+            .SelectMany(c => c.Busy)
+            .Sum(b => (b.EndDateTimeOffset - b.StartDateTimeOffset)?.TotalHours ?? 0);
+
+        // Subtract vacations
+        var vacations = await _context.Vacations
+            .Where(v => v.StartDate <= today && v.EndDate >= today)
+            .ToListAsync();
+
+        // Each vacation takes 8 hours from total capacity
+        // Total available hours = 8h * number of team members
+        var teamCount = await _context.UserBranches
+            .Where(ub => calendarIds.Contains(ub.Branch!.GoogleCalendarId ?? ""))
+            .Select(ub => ub.UserId)
+            .Distinct()
+            .CountAsync();
+
+        if (teamCount == 0) teamCount = 1; // Fallback
+
+        double totalAvailableHours = 8.0 * teamCount;
+        double vacationHours = vacations.Count * 8.0;
+
+        double effectiveBusyHours = busyTotalHours + vacationHours;
+        double capacity = Math.Min(effectiveBusyHours / totalAvailableHours, 1.0);
+
+        return capacity;
+    }
+
+    public async Task SyncTaskShortenedAsync(int userId, string calendarId, string eventId, double newDurationHours)
+    {
+        var task = await _context.TodoTasks.FirstOrDefaultAsync(t => t.GoogleEventId == eventId);
+        if (task == null) return;
+
+        if (newDurationHours <= 0.5)
+        {
+            task.Status = TodoStatus.Completed;
+
+            var service = await GetCalendarServiceAsync(userId);
+            var ev = await service.Events.Get(calendarId, eventId).ExecuteAsync();
+            if (!ev.Summary.StartsWith("✅"))
+            {
+                ev.Summary = "✅ " + ev.Summary;
+                await service.Events.Update(ev, calendarId, eventId).ExecuteAsync();
+            }
+        }
+
+        await _context.SaveChangesAsync();
     }
 }

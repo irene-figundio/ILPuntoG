@@ -187,12 +187,10 @@
 
             function updateTaskStatus(taskId, status) {
                 const data = new URLSearchParams();
-                data.append('type', 'task');
-                data.append('dbId', taskId);
-                data.append('newDate', new Date().toISOString());
-                data.append('status', status);
+                data.append('taskId', taskId);
+                data.append('statusId', status);
 
-                fetch('/Calendar/UpdateEvent', {
+                fetch('/TodoTasks/UpdateStatus', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: data
@@ -200,6 +198,9 @@
                     if (!response.ok) {
                         alert('Errore durante l\'aggiornamento dello stato');
                         location.reload();
+                    } else {
+                        // Optional: Show Toast
+                        showToast('Successo', 'Stato task aggiornato');
                     }
                 });
             }

@@ -10,14 +10,13 @@ namespace WebAPI.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/[controller]")]
-public class DashboardController : ControllerBase
+public class DashboardController : BaseController
 {
     private readonly ITodoTaskRepository _taskRepo;
     private readonly IBranchRepository _branchRepo;
     private readonly IProjectRepository _projectRepo;
     private readonly IClientRepository _clientRepo;
     private readonly IUserRepository _userRepo;
-    private readonly ApplicationDbContext _context;
 
     public DashboardController(
         ITodoTaskRepository taskRepo,
@@ -25,31 +24,31 @@ public class DashboardController : ControllerBase
         IProjectRepository projectRepo,
         IClientRepository clientRepo,
         IUserRepository userRepo,
-        ApplicationDbContext context)
+        ApplicationDbContext context) : base(context)
     {
         _taskRepo = taskRepo;
         _branchRepo = branchRepo;
         _projectRepo = projectRepo;
         _clientRepo = clientRepo;
         _userRepo = userRepo;
-        _context = context;
     }
-
-    private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "1");
-    private string CurrentUserRole => User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
 
     [HttpGet("stats")]
     public async Task<ActionResult<DashboardStats>> GetStats()
     {
-        var tasks = await _taskRepo.GetAllAsync();
+        var allowedBranchIds = await GetUserBranchIdsAsync();
+        var allTasks = await _taskRepo.GetAllAsync();
 
-        // Filter by user if not superadmin
-        if (CurrentUserRole != Roles.SuperAdmin)
+        var tasks = allTasks.Where(t => t.Project != null && allowedBranchIds.Contains(t.Project.BranchId));
+
+        // Filter by user if regular user
+        if (CurrentUserRole == Roles.User)
         {
             tasks = tasks.Where(t => t.TaskAssignments.Any(ta => ta.UserId == CurrentUserId));
         }
 
-        var projects = await _projectRepo.GetAllAsync();
+        var allProjects = await _projectRepo.GetAllAsync();
+        var projects = allProjects.Where(p => allowedBranchIds.Contains(p.BranchId));
 
         var stats = new DashboardStats
         {
@@ -58,7 +57,7 @@ public class DashboardController : ControllerBase
             InProgressTasks = tasks.Count(t => t.Status == TodoStatus.InProgress),
             CompletedTasks = tasks.Count(t => t.Status == TodoStatus.Completed),
             TotalProjects = projects.Count(),
-            UpcomingAppointments = _context.Appointments.Count(a => a.StartTime >= DateTime.Now && a.StartTime <= DateTime.Now.AddDays(7))
+            UpcomingAppointments = _context.Appointments.Count(a => allowedBranchIds.Contains(a.BranchId) && a.StartTime >= DateTime.Now && a.StartTime <= DateTime.Now.AddDays(7))
         };
 
         return Ok(stats);
@@ -67,9 +66,12 @@ public class DashboardController : ControllerBase
     [HttpGet("kanban")]
     public async Task<IActionResult> GetKanbanTasks()
     {
-        var tasks = await _taskRepo.GetAllAsync();
+        var allowedBranchIds = await GetUserBranchIdsAsync();
+        var allTasks = await _taskRepo.GetAllAsync();
 
-        if (CurrentUserRole != Roles.SuperAdmin)
+        var tasks = allTasks.Where(t => t.Project != null && allowedBranchIds.Contains(t.Project.BranchId));
+
+        if (CurrentUserRole == Roles.User)
         {
             tasks = tasks.Where(t => t.TaskAssignments.Any(ta => ta.UserId == CurrentUserId));
         }
@@ -95,6 +97,7 @@ public class DashboardController : ControllerBase
             ClientCount = b.ClientBranches.Count,
             ProjectCount = b.Projects.Count,
             TaskCount = _context.TodoTasks.Count(t => t.Project != null && t.Project.BranchId == b.Id),
+            CompletedTaskCount = _context.TodoTasks.Count(t => t.Project != null && t.Project.BranchId == b.Id && t.Status == TodoStatus.Completed),
             Team = b.UserBranches.Select(ub => ub.User?.Name ?? "").ToList()
         });
 

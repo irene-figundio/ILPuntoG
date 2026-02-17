@@ -1,78 +1,83 @@
 using AppWeb.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace AppWeb.Controllers;
 
 [Microsoft.AspNetCore.Authorization.Authorize]
-public class CalendarController : Controller
+public class CalendarController : BaseController
 {
-    private readonly ApiService _apiService;
-
-    public CalendarController(ApiService apiService)
+    public CalendarController(ApiService apiService) : base(apiService)
     {
-        _apiService = apiService;
     }
 
     public async Task<IActionResult> Index()
     {
-        ViewBag.Branches = await _apiService.GetBranchesAsync();
-        ViewBag.Projects = await _apiService.GetProjectsAsync();
-        ViewBag.Clients = await _apiService.GetClientsAsync();
-        ViewBag.Users = await _apiService.GetUsersAsync();
-        ViewBag.Priorities = await _apiService.GetPrioritiesAsync();
-        ViewBag.TaskTypes = await _apiService.GetTaskTypesAsync();
+        ViewBag.GoogleStatus = await _apiService.GetGoogleCalendarStatusAsync();
+        ViewBag.Projects = await _apiService.GetProjectsAsync(CurrentBranchId);
         return View();
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetEvents(int? userId, int? branchId, int? projectId, int? clientId)
+    public async Task<IActionResult> GetEvents(DateTime start, DateTime end)
     {
-        var events = await _apiService.GetCalendarEventsAsync(userId, branchId, projectId, clientId);
+        var events = await _apiService.GetCalendarEventsAsync(start: start, end: end, branchId: CurrentBranchId);
         return Json(events);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> UpdateEvent(string type, int dbId, DateTime newDate, global::Models.TodoStatus? status, TimeSpan? duration)
-    {
-        await _apiService.UpdateCalendarEventAsync(type, dbId, newDate, status, duration);
-        return Ok();
     }
 
     [HttpGet]
     public async Task<IActionResult> GetGoogleStatus()
     {
-        return Json(await _apiService.GetGoogleCalendarStatusAsync());
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> ConnectGoogle()
-    {
-        return Json(await _apiService.ConnectGoogleCalendarAsync());
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetGoogleCalendars()
-    {
-        return Json(await _apiService.GetGoogleCalendarsAsync());
+        var status = await _apiService.GetGoogleCalendarStatusAsync();
+        return Json(status);
     }
 
     [HttpGet]
     public async Task<IActionResult> GetGoogleEvents(string calendarId, DateTime start, DateTime end)
     {
-        return Json(await _apiService.GetGoogleEventsAsync(calendarId, start, end));
+        var events = await _apiService.GetGoogleEventsAsync(calendarId, start, end);
+        return Json(events);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetTimeline(DateTime start, DateTime end)
+    {
+        var timeline = await _apiService.GetTimelineAsync(start, end);
+        return Json(timeline);
+    }
+
+    public async Task<IActionResult> ConnectGoogle(string redirectUri)
+    {
+        var callbackUrl = Url.Action("GoogleCallback", "Calendar", null, Request.Scheme) ?? "";
+        var authUrl = await _apiService.GetGoogleAuthUrlAsync(callbackUrl);
+        return Redirect(authUrl ?? "/Calendar");
+    }
+
+    public async Task<IActionResult> GoogleCallback(string code)
+    {
+        var callbackUrl = Url.Action("GoogleCallback", "Calendar", null, Request.Scheme) ?? "";
+        await _apiService.HandleGoogleCallbackAsync(code, callbackUrl);
+        return RedirectToAction("Index");
     }
 
     [HttpPost]
-    public async Task<IActionResult> UpdateGoogleEvent(string calendarId, string eventId, [FromBody] object ev)
+    public async Task<IActionResult> AllocateTasks()
     {
-        var success = await _apiService.UpdateGoogleEventAsync(calendarId, eventId, ev);
-        if (success) return Ok();
-        return BadRequest();
+        await _apiService.AllocateTasksAsync();
+        return Ok();
     }
 
     [HttpPost]
-    public async Task<IActionResult> DisconnectGoogle()
+    public async Task<IActionResult> SyncShortenedTask([FromBody] SyncShortenedRequest request)
     {
-        return Json(await _apiService.DisconnectGoogleCalendarAsync());
+        await _apiService.SyncShortenedTaskAsync(request.CalendarId, request.EventId, request.NewDurationHours);
+        return Ok();
+    }
+
+    public class SyncShortenedRequest
+    {
+        public string CalendarId { get; set; } = string.Empty;
+        public string EventId { get; set; } = string.Empty;
+        public double NewDurationHours { get; set; }
     }
 }

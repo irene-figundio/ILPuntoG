@@ -86,6 +86,18 @@
                     </div>
                 </form>
 
+                <div class="mt-6 flex flex-col gap-3">
+                    <div class="relative flex items-center justify-center">
+                        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-100 dark:border-gray-800"></div></div>
+                        <span class="relative px-4 bg-white dark:bg-[#1a202c] text-[10px] font-bold text-gray-400 uppercase">Oppure</span>
+                    </div>
+
+                    <button onclick="googleLogin()" class="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-bold py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center justify-center gap-3">
+                        <img src="https://www.google.com/favicon.ico" class="size-4" alt="Google">
+                        Accedi con Google
+                    </button>
+                </div>
+
                 <div class="mt-8 pt-6 border-t border-gray-50 dark:border-gray-800 text-center">
                     <p class="text-xs text-gray-500 font-medium">Non hai un account?</p>
                     <a href="/Account/Register" class="text-sm font-black text-primary hover:text-primary/80 transition-colors">Registrati ora</a>
@@ -93,5 +105,49 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // If we are here and not redirected from a logout that already cleared it,
+            // we might want to clear it if there's no token in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                localStorage.removeItem('jwtToken');
+            } else {
+                // Check if there's a token in the URL (from Google callback or redirected login)
+                localStorage.setItem('jwtToken', token);
+            }
+        });
+
+        async function googleLogin() {
+            const redirectUri = window.location.origin + '/Account/GoogleCallback';
+            const res = await fetch('/Account/GetGoogleAuthUrl?redirectUri=' + encodeURIComponent(redirectUri));
+            const data = await res.json();
+            if (data.authUrl) {
+                window.location.href = data.authUrl;
+            }
+        }
+
+        // Intercept traditional login if we want to use AJAX
+        $('form').on('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const res = await fetch(this.action, {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            });
+            if (res.ok) {
+                // If the response is a redirect, we might need to handle it differently
+                // but for now, let's assume we get the token back if we use a JSON endpoint
+                // or just let the server-side handle the cookie and we'll sync the localStorage later
+                window.location.href = '/';
+            } else {
+                alert('Login fallito');
+            }
+        });
+    </script>
 </body>
 </html>

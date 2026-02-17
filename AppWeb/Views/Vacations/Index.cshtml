@@ -1,0 +1,121 @@
+@model IEnumerable<Models.Vacation>
+@{
+    ViewData["Title"] = "Gestione Ferie";
+}
+
+<div class="p-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight">Gestione Ferie</h1>
+            <p class="text-gray-500">Registra i tuoi periodi di assenza e sincronizzali con Google Calendar.</p>
+        </div>
+        <button onclick="$('#modalVacation').removeClass('hidden')" class="bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined">add</span>
+            Richiedi Ferie
+        </button>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-100 dark:border-gray-700">
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-400">Utente</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-400">Inizio</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-400">Fine</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-400">Note</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-400">Stato</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-400">Sync</th>
+                    <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-gray-400">Azioni</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                @foreach (var v in Model) {
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                                    @(v.User?.Name?.Substring(0, 1).ToUpper() ?? "?")
+                                </div>
+                                <span class="font-bold text-sm">@(v.User?.Name ?? "N/A")</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm">@v.StartDate.ToShortDateString()</td>
+                        <td class="px-6 py-4 text-sm">@v.EndDate.ToShortDateString()</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">@v.Note</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-[10px] font-bold rounded-full @(v.IsApproved ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600")">
+                                @(v.IsApproved ? "APPROVATO" : "PENDENTE")
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            @if (!string.IsNullOrEmpty(v.GoogleEventId)) {
+                                <span class="material-symbols-outlined text-green-500 text-lg" title="Sincronizzato con Google">sync</span>
+                            } else {
+                                <span class="material-symbols-outlined text-gray-300 text-lg" title="Non sincronizzato">sync_disabled</span>
+                            }
+                        </td>
+                        <td class="px-6 py-4">
+                            <form asp-action="Delete" method="post" onsubmit="return confirm('Eliminare questa richiesta?')">
+                                <input type="hidden" name="id" value="@v.Id" />
+                                <button type="submit" class="text-red-500 hover:text-red-700 transition-colors">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Creation -->
+<div id="modalVacation" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+        <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="font-black text-xl">Richiedi Ferie</h3>
+            <button onclick="$('#modalVacation').addClass('hidden')" class="text-gray-400 hover:text-primary">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="formVacation" class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Data Inizio</label>
+                <input type="date" name="StartDate" id="startDate" required class="w-full px-4 py-2 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-primary" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Data Fine</label>
+                <input type="date" name="EndDate" id="endDate" required class="w-full px-4 py-2 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-primary" />
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Note (Opzionale)</label>
+                <textarea name="Note" id="note" rows="3" class="w-full px-4 py-2 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 focus:ring-primary"></textarea>
+            </div>
+            <button type="submit" class="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                Salva e Sincronizza
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#formVacation').on('submit', function(e) {
+                e.preventDefault();
+                const data = {
+                    StartDate: $('#startDate').val(),
+                    EndDate: $('#endDate').val(),
+                    Note: $('#note').val()
+                };
+
+                $.post('/Vacations/Create', data, function() {
+                    showToast('Successo', 'Richiesta ferie registrata e sincronizzata');
+                    setTimeout(() => location.reload(), 1500);
+                }).fail(function() {
+                    showToast('Errore', 'Impossibile salvare la richiesta', 'error');
+                });
+            });
+        });
+    </script>
+}

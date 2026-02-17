@@ -19,6 +19,8 @@ public class BranchSummary
     public int ClientCount { get; set; }
     public int ProjectCount { get; set; }
     public int TaskCount { get; set; }
+    public int CompletedTaskCount { get; set; }
+    public double Progress => TaskCount > 0 ? (double)CompletedTaskCount / TaskCount * 100 : 0;
     public List<string> Team { get; set; } = new();
 }
 

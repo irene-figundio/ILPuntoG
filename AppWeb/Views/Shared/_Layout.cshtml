@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -121,6 +122,23 @@
                             <span class="max-w-[100px] truncate">@(ViewBag.CurrentBranchName ?? "Tutte le Sedi")</span>
                             <span class="material-symbols-outlined text-gray-400">expand_more</span>
                         </button>
+                        <div class="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 py-2">
+                            <button onclick="changeBranch(0)" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
+                                <span class="material-symbols-outlined text-gray-400">apps</span>
+                                Tutte le Sedi
+                            </button>
+                            <div class="my-1 border-t border-gray-100 dark:border-gray-700"></div>
+                            @if (ViewBag.AllBranches != null)
+                            {
+                                foreach (var branch in (IEnumerable<Models.Branch>)ViewBag.AllBranches)
+                                {
+                                    <button onclick="changeBranch(@branch.Id)" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3">
+                                        <div class="size-2 rounded-full" style="background-color: @(branch.HexColor ?? "#2b8cee")"></div>
+                                        @branch.Name
+                                    </button>
+                                }
+                            }
+                        </div>
                     </div>
 
                     <div class="h-6 w-[1px] bg-gray-200 dark:bg-gray-700 hidden sm:block"></div>
@@ -154,9 +172,66 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
+        // Global AJAX configuration to include JWT
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                const token = localStorage.getItem('jwtToken');
+                if (token) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                }
+            }
+        });
+
+        // Also for native fetch
+        const originalFetch = window.fetch;
+        window.fetch = function() {
+            let [resource, config] = arguments;
+            if (config === undefined) config = {};
+            if (config.headers === undefined) config.headers = {};
+
+            const token = localStorage.getItem('jwtToken');
+            if (token) {
+                if (config.headers instanceof Headers) {
+                    config.headers.set('Authorization', 'Bearer ' + token);
+                } else {
+                    config.headers['Authorization'] = 'Bearer ' + token;
+                }
+            }
+            return originalFetch(resource, config);
+        };
+
+        function showToast(title, message, type = 'success') {
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": "3000"
+            };
+            if (type === 'success') toastr.success(message, title);
+            else if (type === 'error') toastr.error(message, title);
+            else if (type === 'warning') toastr.warning(message, title);
+            else toastr.info(message, title);
+        }
+
+        function changeBranch(id) {
+            $.post('/Branches/SetCurrentBranch', { id: id }, function() {
+                location.reload();
+            });
+        }
+
         $(document).ready(function() {
+            // Sync JWT from query string to localStorage if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            if (token) {
+                localStorage.setItem('jwtToken', token);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             const $mobileSidebar = $('#mobile-sidebar');
             const $overlay = $('#mobile-sidebar-overlay');
 
