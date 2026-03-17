@@ -112,11 +112,13 @@ public class TodoTasksController : BaseController
         // Real Google Sync if CalendarId is set
         if (!string.IsNullOrEmpty(task.GoogleCalendarId)) {
             try {
+                var startOffset = task.Deadline > DateTime.MinValue.AddHours(1) ? task.Deadline.AddHours(-1) : task.Deadline;
+                var endOffset = task.Deadline < DateTime.MaxValue.AddHours(-1) && task.Deadline <= DateTime.MinValue.AddHours(1) ? task.Deadline.AddHours(1) : task.Deadline;
                 var ev = new Google.Apis.Calendar.v3.Data.Event {
                     Summary = $"[TASK] {task.Title}",
                     Description = task.Description,
-                    Start = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = task.Deadline.AddHours(-1) },
-                    End = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = task.Deadline }
+                    Start = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = startOffset },
+                    End = new Google.Apis.Calendar.v3.Data.EventDateTime { DateTimeDateTimeOffset = endOffset }
                 };
                 var created = await _googleService.CreateEventAsync(CurrentUserId, task.GoogleCalendarId, ev);
                 task.GoogleEventId = created.Id;
@@ -195,6 +197,7 @@ public class TodoTasksController : BaseController
             }
 
             // Re-fetch to ensure we don't accidentally update things we shouldn't if they tried to bypass
+            _context.Entry(existing).State = EntityState.Detached;
             _repository.Update(task);
         }
 

@@ -129,12 +129,15 @@ public class CalendarController : BaseController
 
             foreach (var date in occurrenceDates)
             {
+                DateTime endDate;
+                try { endDate = date.Add(appt.Duration); } catch { endDate = DateTime.MaxValue; }
+
                 events.Add(new
                 {
                     id = $"appt-{appt.Id}-{date:yyyyMMdd}",
                     title = appt.Description,
                     start = date.ToString("yyyy-MM-ddTHH:mm:ss"),
-                    end = date.Add(appt.Duration).ToString("yyyy-MM-ddTHH:mm:ss"),
+                    end = endDate.ToString("yyyy-MM-ddTHH:mm:ss"),
                     backgroundColor = color,
                     borderColor = color,
                     extendedProps = new { type = "appointment", dbId = appt.Id, isRecurring = appt.IsRecurring }
@@ -171,18 +174,27 @@ public class CalendarController : BaseController
         var dates = new List<DateTime> { start };
         if (!isRecurring || recurrence == TaskRecurrence.None) return dates;
 
-        var endPeriod = start.AddYears(1);
+        DateTime endPeriod;
+        try { endPeriod = start.AddYears(1); } catch { endPeriod = DateTime.MaxValue; }
+
         var current = start;
 
         while (true)
         {
-            switch (recurrence)
+            try
             {
-                case TaskRecurrence.Daily: current = current.AddDays(1); break;
-                case TaskRecurrence.Weekly: current = current.AddDays(7); break;
-                case TaskRecurrence.Monthly: current = current.AddMonths(1); break;
-                case TaskRecurrence.Yearly: current = current.AddYears(1); break;
-                default: return dates;
+                switch (recurrence)
+                {
+                    case TaskRecurrence.Daily: current = current.AddDays(1); break;
+                    case TaskRecurrence.Weekly: current = current.AddDays(7); break;
+                    case TaskRecurrence.Monthly: current = current.AddMonths(1); break;
+                    case TaskRecurrence.Yearly: current = current.AddYears(1); break;
+                    default: return dates;
+                }
+            }
+            catch
+            {
+                break; // If Add* throws, stop recurrence
             }
 
             if (current > endPeriod) break;
