@@ -92,6 +92,7 @@ public class ProjectsController : BaseController
             return Forbid();
         }
 
+        _context.Entry(existing).State = EntityState.Detached;
         _repository.Update(project);
         await _repository.SaveChangesAsync();
         return NoContent();

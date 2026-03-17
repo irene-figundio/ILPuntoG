@@ -5,6 +5,7 @@ using Repository;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers;
 
@@ -77,6 +78,7 @@ public class AppointmentsController : BaseController
         if (!await CanAccessBranchAsync(existing.BranchId)) return Forbid();
         if (existing.BranchId != appointment.BranchId && !await CanAccessBranchAsync(appointment.BranchId)) return Forbid();
 
+        _context.Entry(existing).State = EntityState.Detached;
         _repository.Update(appointment);
         await _repository.SaveChangesAsync();
         await _auditService.LogAsync("Update", "Appointment", appointment.Id.ToString(), appointment.Description);
